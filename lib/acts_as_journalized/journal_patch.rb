@@ -17,10 +17,16 @@ module Redmine::Acts::Journalized
     
     module InstanceMethods
       def editable_by?(usr)
-        perm = self.class.edit_permissions[self.journalized_type]
-        
-        
-        usr && usr.logged? && (usr.allowed_to?(:edit_issue_notes, project) || (self.user == usr && usr.allowed_to?(:edit_own_issue_notes, project)))
+        perms = self.class.edit_permissions[self.journalized_type]
+        if perms
+          if perms[:edit_notes]
+            edit_notes = usr.allowed_to?(perms[:edit_notes], project)
+          end
+          if perms[:edit_own_notes]
+            edit_own_notes = (self.user == usr && usr.allowed_to?(perms[:edit_own_notes], project))
+          end
+          
+          !!(usr && usr.logged? && (edit_notes || edit_own_notes))
       end
     end
   end
