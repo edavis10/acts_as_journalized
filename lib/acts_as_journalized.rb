@@ -45,9 +45,14 @@ module Redmine
       module InstanceMethods
         def self.included(base)
           base.extend ClassMethods
+          
+          base.class_eval do
+            after_save :create_journal
+          end
         end
         
         def init_journal(user, notes = "")
+          @notes ||= ""
           @current_journal ||= Journal.new(:journalized => self, :user => user, :notes => notes)
           @object_before_change = self.clone
           @object_before_change.status = self.status
@@ -65,7 +70,7 @@ module Redmine
         def create_journal
           if @current_journal
             # attributes changes
-            (Issue.column_names - %w(id description lock_version created_on updated_on)).each {|c|
+            (self.class.column_names - %w(id description lock_version created_on updated_on)).each {|c|
               @current_journal.details << JournalDetail.new(:property => 'attr',
               :prop_key => c,
               :old_value => @object_before_change.send(c),
@@ -85,7 +90,6 @@ module Redmine
             @current_journal.save
           end
         end
-        
         
         module ClassMethods
         end
