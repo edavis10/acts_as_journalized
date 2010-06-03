@@ -27,6 +27,7 @@ module Redmine::Acts::Journalized
           end
           
           !!(usr && usr.logged? && (edit_notes || edit_own_notes))
+        end
       end
     end
   end

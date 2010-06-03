@@ -9,7 +9,7 @@ module Redmine
         def acts_as_journalized(options = {})
           return if self.included_modules.include?(Redmine::Acts::Journalized::InstanceMethods)
 
-          send :include, Redmine::Acts::Event::InstanceMethods
+          send :include, Redmine::Acts::Journalized::InstanceMethods
           
           event_hash = {
             :description => :notes,
@@ -30,10 +30,10 @@ module Redmine
           }
           options.each_pair do |k, v|
             case
-            when key = k.slice(/event_(.+)/, 1)
-              event_hash[key] = value
-            when key = k.slice(/activity_(.+)/, 1)
-              event_hash[key] = value
+            when key = k.to_s.slice(/event_(.+)/, 1)
+              event_hash[key.to_sym] = v
+            when key = k.to_s.slice(/activity_(.+)/, 1)
+              activity_hash[key.to_sym] = v
             end
           end
           
@@ -49,11 +49,11 @@ module Redmine
         
         def init_journal(user, notes = "")
           @current_journal ||= Journal.new(:journalized => self, :user => user, :notes => notes)
-          @issue_before_change = self.clone
-          @issue_before_change.status = self.status
+          @object_before_change = self.clone
+          @object_before_change.status = self.status
           if self.respond_to? :custom_values
             @custom_values_before_change = {}
-            self.custom_values.each {|c| @custom_values_before_change.store c.custom_field_id, c.value }
+            self.custom_values.each {|c| @custom_values_before_change[c.custom_field_id] = c.value }
           end
           # Make sure updated_on is updated when adding a note.
           updated_on_will_change!
