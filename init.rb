@@ -8,4 +8,5 @@ require 'dispatcher'
 Dispatcher.to_prepare do
   # Model Patches
   require_dependency File.dirname(__FILE__) + '/lib/acts_as_journalized/journal_patch'
+  require_dependency File.dirname(__FILE__) + '/lib/acts_as_journalized/journal_observer_patch'
 end
