@@ -8,37 +8,56 @@ module Redmine
       module ClassMethods
         def acts_as_journalized(options = {})
           return if self.included_modules.include?(Redmine::Acts::Journalized::InstanceMethods)
-
+          options.delete(:activity_find_options)
           send :include, Redmine::Acts::Journalized::InstanceMethods
+          plural_name = self.name.underscore.pluralize
           
           event_hash = {
             :description => :notes,
             :author => :user,
             :url => Proc.new do |o|
               {
-                :controller => self.name.underscore,
+                :controller => plural_name,
                 :action => 'show',
-                :id => o.journalized_id,
+                :id => o.id,
                 :anchor => "change-#{o.id}"
               }
             end
           }
           activity_hash = {
-            :type => self.name.underscore.pluralize,
-            :permission => "view_#{self.name.underscore.pluralize}".to_sym,
+            :type => plural_name,
             :author_key => :user_id,
-          }
+            :find_options => {
+              :select => "*, #{self.table_name}.id AS id, #{Journal.table_name}.notes AS notes",
+              :conditions => options.delete(:activity_find_conditions) || "",
+              :joins => [
+                "LEFT OUTER JOIN #{Journal.table_name}
+                  ON #{Journal.table_name}.journalized_id = #{self.table_name}.id",
+                "LEFT OUTER JOIN #{JournalDetail.table_name}
+                  ON  #{JournalDetail.table_name}.journal_id = #{Journal.table_name}.id",
+                "LEFT OUTER JOIN #{Project.table_name} 
+                  ON  #{Project.table_name}.id = 
+                  #{self.table_name}.#{options[:project_key] || 'project_id'}"]}}
+
+          if Redmine::AccessControl.permission(perm = "view_#{plural_name}".to_sym)
+            activity_hash[:permission] = perm
+          end
+
           options.each_pair do |k, v|
             case
             when key = k.to_s.slice(/event_(.+)/, 1)
               event_hash[key.to_sym] = v
             when key = k.to_s.slice(/activity_(.+)/, 1)
-              activity_hash[key.to_sym] = v
+              activity_hash[key.to_sym] = v              
             end
           end
-          
-          Journal.acts_as_event event_hash
-          Journal.acts_as_activity_provider activity_hash
+
+          self.acts_as_event event_hash
+          self.acts_as_activity_provider activity_hash
+
+          unless Redmine::Activity.providers[plural_name].include? self.name
+            Redmine::Activity.register plural_name.to_sym
+          end
         end
       end
 
