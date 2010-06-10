@@ -9,12 +9,14 @@ module Redmine
         def acts_as_journalized(options = {})
           return if self.included_modules.include?(Redmine::Acts::Journalized::InstanceMethods)
           options.delete(:activity_find_options)
+          options.delete(:activity_author_key)
+          options.delete(:event_author)
           send :include, Redmine::Acts::Journalized::InstanceMethods
           plural_name = self.name.underscore.pluralize
           
           event_hash = {
             :description => :notes,
-            :author => :user,
+            :author => Proc.new {|o| User.find_by_id(o.journal_user_id)},
             :url => Proc.new do |o|
               {
                 :controller => plural_name,
@@ -26,9 +28,9 @@ module Redmine
           }
           activity_hash = {
             :type => plural_name,
-            :author_key => :user_id,
+            :author_key => :journal_user_id,
             :find_options => {
-              :select => "*, #{self.table_name}.id AS id, #{Journal.table_name}.notes AS notes",
+              :select => "*, #{self.table_name}.id AS id, #{Journal.table_name}.notes AS notes, #{Journal.table_name}.user_id AS journal_user_id",
               :conditions => options.delete(:activity_find_conditions) || "",
               :joins => [
                 "LEFT OUTER JOIN #{Journal.table_name}
