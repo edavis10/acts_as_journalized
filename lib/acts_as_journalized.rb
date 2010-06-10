@@ -8,6 +8,7 @@ module Redmine
       module ClassMethods
         def acts_as_journalized(options = {})
           return if self.included_modules.include?(Redmine::Acts::Journalized::InstanceMethods)
+          # Remove some options. These are gathered from the Journal automagically
           options.delete(:activity_find_options)
           options.delete(:activity_author_key)
           options.delete(:event_author)
@@ -69,6 +70,7 @@ module Redmine
           
           base.class_eval do
             after_save :create_journal
+            has_many :journals, :as => :journalized, :dependent => :destroy
           end
         end
         
