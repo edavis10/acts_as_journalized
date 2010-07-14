@@ -1,4 +1,4 @@
-require File.dirname(__FILE__) + '/lib/acts_as_journalized'
+require File.expand_path("../lib/acts_as_journalized", __FILE__)
 ActiveRecord::Base.send(:include, Redmine::Acts::Journalized)
 
 # this is for compatibility with current trunk
@@ -7,7 +7,7 @@ ActiveRecord::Base.send(:include, Redmine::Acts::Journalized)
 require 'dispatcher'
 Dispatcher.to_prepare do
   # Patches
-  require_dependency File.dirname(__FILE__) + '/lib/acts_as_journalized/journal_patch'
-  require_dependency File.dirname(__FILE__) + '/lib/acts_as_journalized/journal_observer_patch'
-  require_dependency File.dirname(__FILE__) + '/lib/acts_as_journalized/activity_fetcher_patch'
+  # require_dependency File.dirname(__FILE__) + '/lib/acts_as_journalized/journal_patch'
+  # require_dependency File.dirname(__FILE__) + '/lib/acts_as_journalized/journal_observer_patch'
+  # require_dependency File.dirname(__FILE__) + '/lib/acts_as_journalized/activity_fetcher_patch'
 end
