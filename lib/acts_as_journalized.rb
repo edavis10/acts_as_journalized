@@ -40,7 +40,7 @@ module Redmine
           include Reload
 
           prepare_versioned_options(options)
-          has_many :changes, options, &block
+          has_many :journals, options, &block
         end
 
         private
@@ -60,7 +60,7 @@ module Redmine
           def journalized_activity_hash(plural_name, options)
             Hash.new.tap do |h|
               h[:type] = plural_name
-              h[:author_key] = :user
+              h[:author_key] = :user_id
               h[:find_options] = {
                 :conditions => "#{options.delete(:activity_find_conditions)}" }
 
@@ -72,7 +72,7 @@ module Redmine
 
           def journalized_event_hash(plural_name, options)
             { :description => :notes,
-              :author => Proc.new {|o| o.versions.last.user },
+              :author => Proc.new {|o| o.journals.last.user },
               :url => Proc.new do |o|
                 { :controller => plural_name,
                   :action => 'show',
@@ -87,50 +87,52 @@ module Redmine
           base.extend ClassMethods
 
           base.class_eval do
-            after_save :create_journal
+            before_save :init_journal
+            after_save :update_journal
           end
         end
 
-        def init_journal(user, notes = "")
+        # Saves the current custom values, notes and journal to include them in the next version
+        # Called before save
+        def init_journal(notes = "")
           @notes ||= ""
-          @current_journal ||= Journal.new(:journalized => self, :user => user, :notes => notes)
-          @object_before_change = self.clone
-          @object_before_change.status = self.status
           if self.respond_to? :custom_values
-            @custom_values_before_change = {}
-            self.custom_values.each {|c| @custom_values_before_change[c.custom_field_id] = c.value }
-          end
-          # Make sure updated_on is updated when adding a note.
-          updated_on_will_change!
-          @current_journal
-        end
-        
-        # Saves the changes in a Journal
-        # Called after_save
-        def create_journal
-          if @current_journal
-            # attributes changes
-            (self.class.column_names - %w(id description lock_version created_on updated_on)).each {|c|
-              @current_journal.details << JournalDetail.new(:property => 'attr',
-              :prop_key => c,
-              :old_value => @object_before_change.send(c),
-              :value => send(c)) unless send(c)==@object_before_change.send(c)
-            }
-            if self.respond_to? :custom_values
-              # custom fields changes
-              custom_values.each {|c|
-                next if (@custom_values_before_change[c.custom_field_id]==c.value ||
-                (@custom_values_before_change[c.custom_field_id].blank? && c.value.blank?))
-                @current_journal.details << JournalDetail.new(:property => 'cf', 
-                :prop_key => c.custom_field_id,
-                :old_value => @custom_values_before_change[c.custom_field_id],
-                :value => c.value)
-              }
+            @custom_values_before_change = custom_values.inject({}) do |hash, cv|
+              hash[cv.custom_field_id] = cv.value
+              hash
             end
+          end
+          @current_journal = current_journal
+        end
+
+        # Saves the notes and custom value changes in the last Journal
+        # Called after_update
+        def update_journal
+          if @custom_values_before_change
+            # Has custom values from init_journal_notes
+            changed_custom_values = custom_values.inject({}) do |hash, c|
+              unless (@custom_values_before_change[c.custom_field_id] == c.value ||
+                  @custom_values_before_change[c.custom_field_id].blank? && c.value.blank?)
+                hash[c.custom_field_id.to_s] = [@custom_values_before_change[c.custom_field_id], c.value]
+              end
+              hash
+            end
+          end
+
+          unless changed_custom_values.empty? && @notes.empty?
+            unless current_journal == @current_journal
+              # No attribute changes, update the timestamp to include notes and changed
+              # custom values
+              updated_on_will_change!
+              save
+              @current_journal = current_journal
+            end
+            @current_journal.notes = @notes
+            @current_journal.details.merge(changed_custom_values)
             @current_journal.save
           end
         end
-        
+
         module ClassMethods
         end
       end

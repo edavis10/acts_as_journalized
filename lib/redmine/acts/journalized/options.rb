@@ -25,7 +25,7 @@ module Redmine::Acts::Journalized
         options.symbolize_keys!
         options.reverse_merge!(Configuration.options)
         options.reverse_merge!(
-          :class_name => 'Redmine::Acts::Journalized::Journal',
+          :class_name => 'Journal',
           :dependent => :delete_all
         )
         options.reverse_merge!(

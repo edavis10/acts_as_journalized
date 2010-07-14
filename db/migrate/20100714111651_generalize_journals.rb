@@ -4,7 +4,7 @@ class GeneralizeJournals < ActiveRecord::Migration
     drop_table :journal_details
     create_table :journals do |t|
       t.belongs_to :versioned, :polymorphic => true
-      t.belongs_to :user            
+      t.belongs_to :user
       t.integer :number
       t.string :tag
       t.text :notes

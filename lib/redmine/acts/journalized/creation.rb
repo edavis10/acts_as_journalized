@@ -7,7 +7,7 @@ module Redmine::Acts::Journalized
         extend ClassMethods
         include InstanceMethods
 
-        after_update :create_version, :if => :create_version?
+        after_save :create_version, :if => :create_version?
         after_update :update_version, :if => :update_version?
 
         class << self
@@ -34,13 +34,15 @@ module Redmine::Acts::Journalized
     module InstanceMethods
       private
         # Returns whether a new version should be created upon updating the parent record.
+        # A new version will be created if attributes have changed or no previous version
+        # exists
         def create_version?
-          !version_changes.blank?
+          !version_changes.blank? || journals.empty?
         end
 
         # Creates a new version upon updating the parent record.
         def create_version
-          versions.create(version_attributes)
+          journals.create(version_attributes)
           reset_version_changes
           reset_version
         end
@@ -54,7 +56,7 @@ module Redmine::Acts::Journalized
 
         # Updates the last version's changes by appending the current version changes.
         def update_version
-          return create_version unless v = versions.last
+          return create_version unless v = journals.last
           v.changes_will_change!
           v.update_attribute(:changes, v.changes.append_changes(version_changes))
           reset_version_changes
@@ -72,7 +74,7 @@ module Redmine::Acts::Journalized
             when vestal_versions_options[:only] then self.class.column_names & vestal_versions_options[:only]
             when vestal_versions_options[:except] then self.class.column_names - vestal_versions_options[:except]
             else self.class.column_names
-          end - %w(created_at created_on updated_at updated_on)
+          end - %w(created_at updated_at)
         end
 
         # Specifies the attributes used during version creation. This is separated into its own

@@ -18,7 +18,7 @@ module Redmine::Acts::Journalized
       # documentation for more details.
       def reset_to!(value)
         if saved = skip_version{ revert_to!(value) }
-          versions.send(:delete_records, versions.after(value))
+          journals.send(:delete_records, journals.after(value))
           reset_version
         end
         saved

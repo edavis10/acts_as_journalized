@@ -14,6 +14,10 @@ module Redmine::Acts::Journalized
         @version ||= last_version
       end
 
+      def current_journal
+        journals.last
+      end
+
       # Accepts a value corresponding to a specific version record, builds a history of changes
       # between that version and the current version, and then iterates over that history updating
       # the object's attributes until the it's reverted to its prior state.
@@ -27,7 +31,7 @@ module Redmine::Acts::Journalized
       # The version number of the object will reflect whatever version has been reverted to, and
       # the return value of the +revert_to+ method is also the target version number.
       def revert_to(value)
-        to_number = versions.number_at(value)
+        to_number = journals.number_at(value)
 
         changes_between(version, to_number).each do |attribute, change|
           write_attribute(attribute, change.last)
@@ -51,11 +55,11 @@ module Redmine::Acts::Journalized
       end
 
       private
-        # Returns the number of the last created version in the object's version history.
+        # Returns the number of the last created journal in the object's version history.
         #
-        # If no associated versions exist, the object is considered at version 1.
+        # If no associated journals exist, the object is considered at version 1.
         def last_version
-          @last_version ||= versions.maximum(:number) || 1
+          @last_version ||= journals.maximum(:number) || 0
         end
 
         # Clears the cached version number instance variables so that they can be recalculated.
