@@ -20,11 +20,11 @@ module Redmine::Acts::Journalized
         # Overrides the +version_attributes+ method to include user information passed into the
         # parent object, by way of a +updated_by+ attr_accessor.
         def version_attributes_with_user
-          version_attributes_without_user.merge(:user => updated_by)
+          version_attributes_without_user.merge(:user => updated_by || User.current)
         end
     end
 
-    # Instance methods added to Redmine::Acts::Journalized::Journal to accomodate incoming 
+    # Instance methods added to Redmine::Acts::Journalized::Journal to accomodate incoming
     # user information.
     module JournalMethods
       def self.included(base) # :nodoc:

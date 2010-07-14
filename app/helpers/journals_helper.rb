@@ -8,27 +8,25 @@ module JournalsHelper
     field = key.to_s.gsub(/\_id$/, "")
     label = l(("field_" + field).to_sym)
 
-    case key
-    when ['due_date', 'start_date'].include?(key)
-      old_value = format_date(values.first.to_date) if values.first
-      value = format_date(values.last.to_date) if values.first
-
-    when ['project_id', 'status_id', 'tracker_id', 'assigned_to_id', 'priority_id', 'category_id', 'fixed_version_id'].include?(key)
-      old_value = find_name_by_reflection(field, values.first)
-      value = find_name_by_reflection(field, values.last)
-      
-    when key == 'estimated_hours'
-      old_value = "%0.02f" % values.first.to_f if (value.first && !value.first.empty?)
-      value = "%0.02f" % values.last.to_f if (value.first && !value.first.empty?)
-
-    when key == 'parent_id'
-      old_value = "##{values.first}" unless values.first.blank?
-      value = "##{values.last}" unless values.last.blank?
+    formatter = case key
+    when 'due_date', 'start_date'
+      Proc.new {|v| format_date(v.to_date) }
+    when 'project_id', 'status_id', 'tracker_id', 'assigned_to_id', 'priority_id', 'category_id', 'fixed_version_id'
+      Proc.new {|v| find_name_by_reflection(field, v) }
+    when 'estimated_hours'
+      Proc.new {|v| "%0.02f" % v.to_f }
+    when 'parent_id'
+      Proc.new {|v| "##{values.first}" }
+    else
+      return nil # If we don't know how to format this, ignore it
     end
+
+    old_value = formatter.call(values.first) if values.first
+    value = formatter.call(values.last) if values.last
 
     [label, old_value, value]
   end
-  
+
   def format_custom_value_detail(custom_field, values, no_html)
     label = custom_field.name
     old_value = format_value(values.first, custom_field.field_format) if values.first
@@ -38,13 +36,13 @@ module JournalsHelper
   end
 
   def format_attachment_detail(key, values, no_html)
-    label = l(:label_attachment)      
+    label = l(:label_attachment)
     old_value = values.first
     value = values.last
-    
+
     [label, old_value, value]
   end
-  
+
   def format_html_attachment_detail(value)
     if !value.blank? && a = Attachment.find_by_id(value)
       # Link to the attachment if it has not been removed
@@ -73,14 +71,15 @@ module JournalsHelper
       attachment_detail = format_attachment_detail(key, values, no_html)
     end
 
-    label, old_value, value = *(attr_detail || cv_detail || attachment_detail)
+    label, old_value, value = attr_detail || cv_detail || attachment_detail
     Redmine::Hook.call_hook :helper_issues_show_detail_after_setting, {:detail => detail,
         :label => label, :value => value, :old_value => old_value }
-    label, old_value, value = *[label, old_value, value].collect(&:to_s)
+    return "" unless label || old_value || value # print nothing if there are no values
+    label, old_value, value = [label, old_value, value].collect(&:to_s)
 
-    unless no_html        
+    unless no_html
       label, old_value, value = *format_html_detail(label, old_value, value)
-      value = format_html_attachment_detail(value) if attachment_detail        
+      value = format_html_attachment_detail(value) if attachment_detail
     end
 
     unless value.blank?
@@ -97,4 +96,14 @@ module JournalsHelper
       l(:text_journal_deleted, :label => label, :old => old_value)
     end
   end
+
+  # Find the name of an associated record stored in the field attribute
+  def find_name_by_reflection(field, id)
+    association = versioned.class.reflect_on_association(field.to_sym)
+    if association
+      record = association.class_name.constantize.find_by_id(id)
+      return record.name if record
+    end
+  end
+
 end
