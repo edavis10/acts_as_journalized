@@ -1,12 +1,11 @@
 This plugin uses parts from different other software projects, which 
 are licensed under different conditions
 
-
-lib/*.rb:
+lib/acts_as_journalized.rb, app/**:
   Copyright (c) 2010 Finn GmbH
   All rights reserved.
 
-lib/vestal_versions/*.rb, test/*.rb, tasks/*.rake:
+All remaining files are:
   Copyright (c) 2009 Steve Richert
 
   Permission is hereby granted, free of charge, to any person obtaining

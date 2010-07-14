@@ -13,21 +13,7 @@ module Redmine
         def acts_as_journalized(options = {}, &block)
           return if versioned?
 
-          send :include, Redmine::Acts::Journalized::InstanceMethods
-          plural_name = self.name.underscore.pluralize
-
-          event_hash = journalized_event_hash(plural_name, options)
-          activity_hash = journalized_activity_hash(plural_name, options)
-
-          journalized_merge_option_hashes(event_hash, activity_hash, options)
-
-          self.acts_as_event event_hash
-          self.acts_as_activity_provider activity_hash
-
-          unless Redmine::Activity.providers[plural_name].include? self.name
-            Redmine::Activity.register plural_name.to_sym
-          end
-
+          include SaveHooks
           include Options
           include Changes
           include Creation
@@ -38,6 +24,19 @@ module Redmine
           include Control
           include Tagging
           include Reload
+
+          plural_name = self.name.underscore.pluralize
+
+          event_hash = journalized_event_hash(plural_name, options)
+          activity_hash = journalized_activity_hash(plural_name, options)
+          journalized_merge_option_hashes(event_hash, activity_hash, options)
+
+          acts_as_event event_hash
+          acts_as_activity_provider activity_hash
+
+          unless Redmine::Activity.providers[plural_name].include? self.name
+            Redmine::Activity.register plural_name.to_sym
+          end
 
           prepare_versioned_options(options)
           has_many :journals, options, &block
@@ -58,7 +57,7 @@ module Redmine
           end
 
           def journalized_activity_hash(plural_name, options)
-            Hash.new.tap do |h|
+            {}.tap do |h|
               h[:type] = plural_name
               h[:author_key] = :user_id
               h[:find_options] = {
@@ -82,7 +81,7 @@ module Redmine
           end
       end
 
-      module InstanceMethods
+      module SaveHooks
         def self.included(base)
           base.extend ClassMethods
 

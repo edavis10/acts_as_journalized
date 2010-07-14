@@ -1,6 +1,8 @@
 # The ActiveRecord model representing versions.
 class Journal < ActiveRecord::Base
+  unloadable
   include Comparable
+  include JournalsHelper
 
   # Associate polymorphically with the parent record.
   belongs_to :versioned, :polymorphic => true    
