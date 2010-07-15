@@ -77,10 +77,16 @@ module Redmine::Acts::Journalized
           end - %w(created_at updated_at)
         end
 
+        # Returns the activity type. Should be overridden in the journalized class to offer
+        # multiple types
+        def activity_type
+          self.class.name.underscore.pluralize
+        end
+
         # Specifies the attributes used during version creation. This is separated into its own
         # method so that it can be overridden by the VestalVersions::Users feature.
         def version_attributes
-          {:changes => version_changes, :version => last_version + 1}
+          {:type => activity_type, :changes => version_changes, :version => last_version + 1}
         end
     end
   end

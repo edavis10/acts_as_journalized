@@ -29,7 +29,6 @@ module Redmine
 
           event_hash = journalized_event_hash(plural_name, options)
           activity_hash = journalized_activity_hash(plural_name, options)
-          journalized_merge_option_hashes(event_hash, activity_hash, options)
 
           acts_as_event event_hash
           acts_as_activity_provider activity_hash
@@ -43,28 +42,31 @@ module Redmine
         end
 
         private
-          def journalized_merge_option_hashes(event_hash, activity_hash, options)
-            options.each_pair do |k, v|
-              case
-              when key = k.to_s.slice(/event_(.+)/, 1)
-                event_hash[key.to_sym] = v
-                options.delete(k)
-              when key = k.to_s.slice(/activity_(.+)/, 1)
-                activity_hash[key.to_sym] = v
-                options.delete(k)
+          def journalized_option_hashes(prefix, options)
+            returning({}) do |hash|
+              options.each_pair do |k, v|
+                if key = k.to_s.slice(/#{prefix}_(.+)/, 1)
+                  hash[key.to_sym] = v
+                  options.delete(k)
+                end
               end
             end
           end
 
           def journalized_activity_hash(plural_name, options)
-            {}.tap do |h|
-              h[:type] = plural_name
+            journalized_option_hashes("activity", options).tap do |h|
+              h[:type] ||= plural_name
               h[:author_key] = :user_id
+              h[:timestamp] = "#{Journal.table_name}.created_at"
               h[:find_options] = {
-                :conditions => "#{options.delete(:activity_find_conditions)}" }
+                :conditions => "#{h[:activity_find_conditions]} AND
+                                #{Journal.table_name}.journalized_type == #{name} AND
+                                #{Journal.table_name}.type == #{h[:type]}" }
 
-              if Redmine::AccessControl.permission(perm = "view_#{plural_name}".to_sym)
-                h[:permission] = perm
+              if Redmine::AccessControl.permission(perm = :"view_#{plural_name}")
+                # Needs to be like this, since setting the key to nil would mean
+                # everyone may see this activity
+                h[:permission] ||= perm
               end
             end
           end
@@ -77,7 +79,7 @@ module Redmine
                   :action => 'show',
                   :id => o.id,
                   :anchor => "change-#{o.id}" }
-              end }
+              end }.reverse_merge journalized_option_hashes("event", options)
           end
       end
 
