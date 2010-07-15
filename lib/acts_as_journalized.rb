@@ -22,6 +22,7 @@ module Redmine
           include Conditions
           include Control
           include Reload
+          include Permissions
           include SaveHooks
 
           plural_name = self.name.underscore.pluralize

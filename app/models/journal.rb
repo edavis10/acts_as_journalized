@@ -41,6 +41,10 @@ class Journal < ActiveRecord::Base
     end
   end
 
+  def editable_by?(user)
+    versioned.journal_editable_by?(user)
+  end
+
   def details
     attributes["changes"] || attributes[:changes]
   end
