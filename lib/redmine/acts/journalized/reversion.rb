@@ -31,7 +31,7 @@ module Redmine::Acts::Journalized
       # The version number of the object will reflect whatever version has been reverted to, and
       # the return value of the +revert_to+ method is also the target version number.
       def revert_to(value)
-        to_number = journals.number_at(value)
+        to_number = journals.version_at(value)
 
         changes_between(version, to_number).each do |attribute, change|
           write_attribute(attribute, change.last)
@@ -59,7 +59,7 @@ module Redmine::Acts::Journalized
         #
         # If no associated journals exist, the object is considered at version 1.
         def last_version
-          @last_version ||= journals.maximum(:number) || 0
+          @last_version ||= journals.maximum(:version) || 0
         end
 
         # Clears the cached version number instance variables so that they can be recalculated.

@@ -20,7 +20,7 @@ module Redmine::Acts::Journalized
       # version number, a symbol representing an association proxy method, a string representing a
       # version tag or a version object itself.
       def changes_between(from, to)
-        from_number, to_number = journals.number_at(from), journals.number_at(to)
+        from_number, to_number = journals.version_at(from), journals.version_at(to)
         return {} if from_number == to_number
         chain = journals.between(from_number, to_number).reject(&:initial?)
         return {} if chain.empty?

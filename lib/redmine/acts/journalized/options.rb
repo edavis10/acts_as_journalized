@@ -29,7 +29,7 @@ module Redmine::Acts::Journalized
           :dependent => :delete_all
         )
         options.reverse_merge!(
-          :order => "#{options[:class_name].constantize.table_name}.number ASC"
+          :order => "#{options[:class_name].constantize.table_name}.version ASC"
         )
 
         class_inheritable_accessor :vestal_versions_options

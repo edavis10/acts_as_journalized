@@ -5,8 +5,8 @@ class GeneralizeJournals < ActiveRecord::Migration
     create_table :journals do |t|
       t.belongs_to :versioned, :polymorphic => true
       t.belongs_to :user
-      t.integer :number
-      t.string :tag
+      t.integer :version
+      t.string :type
       t.text :notes
       t.text :changes
       t.timestamps
@@ -14,9 +14,8 @@ class GeneralizeJournals < ActiveRecord::Migration
 
     change_table :journals do |t|
       t.index [:versioned_id, :versioned_type]
-      t.index [:user_id]      
-      t.index :number
-      t.index :tag
+      t.index [:user_id]
+      t.index :type
       t.index :created_at
     end
   end

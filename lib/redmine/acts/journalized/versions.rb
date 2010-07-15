@@ -9,28 +9,28 @@ module Redmine::Acts::Journalized
     # given by the arguments. If the +from+ value represents a version before that of the +to+
     # value, the array will be ordered from earliest to latest. The reverse is also true.
     def between(from, to)
-      from_number, to_number = number_at(from), number_at(to)
+      from_number, to_number = version_at(from), version_at(to)
       return [] if from_number.nil? || to_number.nil?
 
       condition = (from_number == to_number) ? to_number : Range.new(*[from_number, to_number].sort)
       all(
-        :conditions => {:number => condition},
-        :order => "#{aliased_table_name}.number #{(from_number > to_number) ? 'DESC' : 'ASC'}"
+        :conditions => {:version => condition},
+        :order => "#{aliased_table_name}.version #{(from_number > to_number) ? 'DESC' : 'ASC'}"
       )
     end
 
     # Returns all version records created before the version associated with the given value.
     def before(value)
-      return [] if (number = number_at(value)).nil?
-      all(:conditions => "#{aliased_table_name}.number < #{number}")
+      return [] if (version = version_at(value)).nil?
+      all(:conditions => "#{aliased_table_name}.version < #{version}")
     end
 
     # Returns all version records created after the version associated with the given value.
     #
     # This is useful for dissociating records during use of the +reset_to!+ method.
     def after(value)
-      return [] if (number = number_at(value)).nil?
-      all(:conditions => "#{aliased_table_name}.number > #{number}")
+      return [] if (version = version_at(value)).nil?
+      all(:conditions => "#{aliased_table_name}.version > #{version}")
     end
 
     # Returns a single version associated with the given value. The following formats are valid:
@@ -51,7 +51,6 @@ module Redmine::Acts::Journalized
       case value
         when Date, Time then last(:conditions => ["#{aliased_table_name}.created_at <= ?", value.to_time])
         when Numeric then find_by_number(value.floor)
-        when String then find_by_tag(value)
         when Symbol then respond_to?(value) ? send(value) : nil
         when Journal then value
       end
@@ -62,12 +61,13 @@ module Redmine::Acts::Journalized
     # Hoever, for Numeric values, the version number can be returned directly and for Date/Time
     # values, a default value of 1 is given to ensure that times prior to the first version
     # still return a valid version number (useful for reversion).
-    def number_at(value)
+    def version_at(value)
       case value
-        when Date, Time then (v = at(value)) ? v.number : 1
+        when Date, Time then (v = at(value)) ? v.version : 1
         when Numeric then value.floor
-        when String, Symbol then (v = at(value)) ? v.number : nil
-        when Journal then value.number
+        when Symbol then (v = at(value)) ? v.version : nil
+        when String then nil
+        when Journal then value.version
       end
     end
   end
