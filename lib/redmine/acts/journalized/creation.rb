@@ -86,7 +86,7 @@ module Redmine::Acts::Journalized
         # Specifies the attributes used during version creation. This is separated into its own
         # method so that it can be overridden by the VestalVersions::Users feature.
         def version_attributes
-          {:type => activity_type, :changes => version_changes, :version => last_version + 1}
+          {:activity_type => activity_type, :changes => version_changes, :version => last_version + 1}
         end
     end
   end
