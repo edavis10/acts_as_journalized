@@ -10,7 +10,30 @@ module Redmine
       end
 
       module ClassMethods
+
+        def plural_name
+          self.name.underscore.pluralize
+        end
+
+        # A model might provide as many activity_types as it wishes.
+        def acts_as_activity(options = {})
+          activity_hash = journalized_activity_hash(options)
+          type = activity_hash[:type]
+          acts_as_activity_provider activity_hash
+          unless Redmine::Activity.providers[type].include? self.name
+            Redmine::Activity.register type.to_sym, :class_name => self.name
+          end
+        end
+
+        # This call will add an activity and, if neccessary, start the versioning and
+        # add an event callback on the model.
+        # Versioning and acting as an Event may only be applied once.
+        # To apply more than on activity, use acts_as_activity
         def acts_as_journalized(options = {}, &block)
+          activity_hash, event_hash, version_hash = split_option_hashes(options)
+
+          acts_as_activity(activity_hash)
+
           return if versioned?
 
           include Options
@@ -25,53 +48,49 @@ module Redmine
           include Permissions
           include SaveHooks
 
-          plural_name = self.name.underscore.pluralize
+          acts_as_event journalized_event_hash(event_hash)
 
-          event_hash = journalized_event_hash(plural_name, options)
-          activity_hash = journalized_activity_hash(plural_name, options)
-
-          acts_as_event event_hash
-          acts_as_activity_provider activity_hash
-
-          unless Redmine::Activity.providers[plural_name].include? self.name
-            Redmine::Activity.register plural_name.to_sym
-          end
-
-          prepare_versioned_options(options)
-          has_many :journals, options, &block
+          prepare_versioned_options(version_hash)
+          has_many :journals, version_hash, &block
         end
 
         private
-          def journalized_option_hashes(prefix, options)
-            returning({}) do |hash|
-              options.each_pair do |k, v|
-                if key = k.to_s.slice(/#{prefix}_(.+)/, 1)
-                  hash[key.to_sym] = v
-                  options.delete(k)
-                end
+          def split_option_hashes(options)
+            activity_hash = {}
+            event_hash = {}
+            version_hash = {}
+
+            options.each_pair do |k, v|
+              case
+              when k.to_s =~ /^activity_(.+)$/
+                activity_hash[$1.to_sym] = v
+              when k.to_s =~ /^event_(.+)$/
+                event_hash[$1.to_sym] = v
+              else
+                version_hash[k.to_sym] = v
               end
             end
+            [activity_hash, event_hash, version_hash]
           end
 
-          def journalized_activity_hash(plural_name, options)
-            journalized_option_hashes("activity", options).tap do |h|
+          def journalized_activity_hash(options)
+            options.tap do |h|
               h[:type] ||= plural_name
-              h[:author_key] = :user_id
-              h[:timestamp] = "#{Journal.table_name}.created_at"
-              h[:find_options] = {
-                :conditions => "#{h[:activity_find_conditions]} AND
-                                #{Journal.table_name}.journalized_type == #{name} AND
-                                #{Journal.table_name}.type == #{h[:type]}" }
+              h[:timestamp] ||= "#{Journal.table_name}.created_at"
+              h[:author_key] = "#{Journal.table_name}.user_id"
 
-              if Redmine::AccessControl.permission(perm = :"view_#{plural_name}")
-                # Needs to be like this, since setting the key to nil would mean
-                # everyone may see this activity
-                h[:permission] ||= perm
+              (h[:find_options] ||= {}).tap do |opts|
+                opts[:conditions] ? opts[:conditions] << " AND " : opts[:conditions] = ""
+                opts[:conditions] << "#{Journal.table_name}.versioned_type = '#{name}'" <<
+                    " AND  #{Journal.table_name}.activity_type = '#{h[:type]}'"
+                (opts[:include] ||= []) << :journals
+                opts[:include] << [:project] if reflect_on_association(:project)
+                opts[:include].uniq!
               end
             end
           end
 
-          def journalized_event_hash(plural_name, options)
+          def journalized_event_hash(options)
             { :description => :notes,
               :author => Proc.new {|o| o.journals.last.user },
               :url => Proc.new do |o|
@@ -79,7 +98,7 @@ module Redmine
                   :action => 'show',
                   :id => o.id,
                   :anchor => "change-#{o.id}" }
-              end }.reverse_merge journalized_option_hashes("event", options)
+              end }.reverse_merge options
           end
       end
 
