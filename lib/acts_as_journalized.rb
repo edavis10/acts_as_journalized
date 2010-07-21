@@ -16,6 +16,7 @@ module Redmine
         end
 
         # A model might provide as many activity_types as it wishes.
+        # Activities are just different search options for the event a model provides
         def acts_as_activity(options = {})
           activity_hash = journalized_activity_hash(options)
           type = activity_hash[:type]
@@ -55,6 +56,8 @@ module Redmine
         end
 
         private
+          # Splits an option has into three hashes:
+          ## => [{ options prefixed with "activity_" }, { options prefixed with "event_" }, { other options }]
           def split_option_hashes(options)
             activity_hash = {}
             event_hash = {}
@@ -73,6 +76,18 @@ module Redmine
             [activity_hash, event_hash, version_hash]
           end
 
+          # Merges the passed activity_hash with the options we require for 
+          # acts_as_journalized to work, as follows:
+          # # type is the supplied or the pluralized class name
+          # # timestamp is supplied or the journal's created_at
+          # # author_key will always be the journal's author
+          # #
+          # # find_options are merged as follows:
+          # # # select statement is enriched with the journal fields
+          # # # journal association is added to the includes
+          # # # if a project is associated with the model, this is added to the includes
+          # # # the find conditions are extended to only choose journals which have the proper activity_type
+          # => a valid activity hash
           def journalized_activity_hash(options)
             options.tap do |h|
               h[:type] ||= plural_name
@@ -93,6 +108,8 @@ module Redmine
             end
           end
 
+          # Merges the event hashes defaults with the options provided by the user
+          # The defaults take their details from the journal
           def journalized_event_hash(options)
             { :description => :notes,
               :author => :user,
@@ -163,6 +180,8 @@ module Redmine
         end
 
         # Allow to semantically substract a hash of custom value changes from another
+        # This the method '-' to the singleton class of the custom values hash, so the 
+        # code for getting the difference between old and new custom values looks semantically correct
         def current_custom_values
           cvs = custom_values
           class << cvs
