@@ -57,7 +57,7 @@ module Redmine::Acts::Journalized
       private
         # Returns the number of the last created journal in the object's version history.
         #
-        # If no associated journals exist, the object is considered at version 1.
+        # If no associated journals exist, the object is considered at version 0.
         def last_version
           @last_version ||= journals.maximum(:version) || 0
         end

@@ -3,20 +3,22 @@ class GeneralizeJournals < ActiveRecord::Migration
     drop_table :journals
     drop_table :journal_details
     create_table :journals do |t|
-      t.belongs_to :versioned, :polymorphic => true
-      t.belongs_to :user
-      t.integer :version
+      t.integer :user_id, :default => 0,  :null => false
+      t.integer :versioned_id, :default => 0,  :null => false
+      t.integer :version, :default => 0,  :null => false
       t.string :activity_type
       t.text :notes
       t.text :changes
+      t.string :type
       t.timestamps
     end
 
     change_table :journals do |t|
-      t.index [:versioned_id, :versioned_type]
-      t.index [:user_id]
+      t.index :versioned_id
+      t.index :user_id
       t.index :activity_type
       t.index :created_at
+      t.index :type
     end
   end
 

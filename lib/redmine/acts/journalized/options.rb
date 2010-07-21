@@ -36,7 +36,6 @@ module Redmine::Acts::Journalized
         self.vestal_versions_options = options.dup
 
         options.merge!(
-          :as => :versioned,
           :extend => Array(options[:extend]).unshift(Versions)
         )
       end

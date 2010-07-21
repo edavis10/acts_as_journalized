@@ -1,14 +1,12 @@
 # The ActiveRecord model representing versions.
 class Journal < ActiveRecord::Base
   unloadable
+
   include Comparable
   include JournalsHelper
 
   # Make sure each journaled model instance only has unique version ids
-  validates_uniqueness_of :version, :scope => [:versioned_id, :versioned_type]
-
-  # Associate polymorphically with the parent record.
-  belongs_to :versioned, :polymorphic => true
+  validates_uniqueness_of :version, :scope => [:versioned_id]
 
   # ActiveRecord::Base#changes is an existing method, so before serializing the +changes+ column,
   # the existing +changes+ method is undefined. The overridden +changes+ method pertained to
@@ -34,7 +32,7 @@ class Journal < ActiveRecord::Base
   def project
     if versioned.respond_to?(:project)
       versioned.project
-    elsif versioned_type == "Project"
+    elsif versioned.is_a? Project
       versioned
     else
       nil

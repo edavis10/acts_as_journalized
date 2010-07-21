@@ -42,7 +42,7 @@ module Redmine::Acts::Journalized
 
         # Creates a new version upon updating the parent record.
         def create_version
-          journals.create(version_attributes)
+          journals << self.class.journal_class.create(version_attributes)
           reset_version_changes
           reset_version
         end
