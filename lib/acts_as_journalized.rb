@@ -80,9 +80,12 @@ module Redmine
               h[:author_key] = "#{Journal.table_name}.user_id"
 
               (h[:find_options] ||= {}).tap do |opts|
+                opts[:select] ? opts[:select] << ", " : opts[:select] = ""
+                opts[:select] << "#{Journal.table_name}.*"
+
                 opts[:conditions] ? opts[:conditions] << " AND " : opts[:conditions] = ""
-                opts[:conditions] << "#{Journal.table_name}.versioned_type = '#{name}'" <<
-                    " AND  #{Journal.table_name}.activity_type = '#{h[:type]}'"
+                opts[:conditions] << "#{Journal.table_name}.activity_type = '#{h[:type]}'"
+
                 (opts[:include] ||= []) << :journals
                 opts[:include] << [:project] if reflect_on_association(:project)
                 opts[:include].uniq!
@@ -92,12 +95,12 @@ module Redmine
 
           def journalized_event_hash(options)
             { :description => :notes,
-              :author => Proc.new {|o| o.journals.last.user },
+              :author => :user,
               :url => Proc.new do |o|
                 { :controller => plural_name,
                   :action => 'show',
-                  :id => o.id,
-                  :anchor => "change-#{o.id}" }
+                  :id => o.versioned.id,
+                  :anchor => "change-#{o.versioned.id}" }
               end }.reverse_merge options
           end
       end
