@@ -44,6 +44,20 @@ class Journal < ActiveRecord::Base
   end
 
   def details
-    attributes["changes"] || attributes[:changes]
+    attributes["changes"]
   end
+
+  # Backwards compatibility with old-style timestamps
+  def created_on
+    created_at
+  end
+
+  def method_missing(method, *args, &block)
+    begin
+      versioned.send(method, *args, &block)
+    rescue NoMethodError => e
+      e.name.to_sym == method ? super(method, *args, &block) : raise(e)
+    end
+  end
+
 end

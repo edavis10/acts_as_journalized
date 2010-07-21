@@ -68,7 +68,7 @@ module JournalsHelper
       Proc.new {|v| format_date(v.to_date) }
     when 'project_id', 'status_id', 'tracker_id', 'assigned_to_id', 'priority_id', 'category_id', 'fixed_version_id'
       Proc.new {|v| find_name_by_reflection(field, v) }
-    when 'estimated_hours'
+    when 'estimated_hours', 'done_ratio'
       Proc.new {|v| "%0.02f" % v.to_f }
     when 'parent_id'
       Proc.new {|v| "##{values.first}" }
@@ -109,8 +109,8 @@ module JournalsHelper
   
   def format_html_detail(label, old_value, value)
     label = content_tag('strong', label)
-    old_value = content_tag("i", h(old_value)) if old_value
-    old_value = content_tag("strike", old_value) if old_value and value.empty?
+    old_value = content_tag("i", h(old_value)) if old_value && !old_value.blank?
+    old_value = content_tag("strike", old_value) if old_value and value.blank?
     [label, old_value, value]
   end
 
@@ -129,7 +129,7 @@ module JournalsHelper
     label, old_value, value = attr_detail || cv_detail || attachment_detail
     Redmine::Hook.call_hook :helper_issues_show_detail_after_setting, {:detail => detail,
         :label => label, :value => value, :old_value => old_value }
-    return "" unless label || old_value || value # print nothing if there are no values
+    return nil unless label || old_value || value # print nothing if there are no values
     label, old_value, value = [label, old_value, value].collect(&:to_s)
 
     unless no_html
