@@ -91,18 +91,20 @@ module Redmine
           def journalized_activity_hash(options)
             options.tap do |h|
               h[:type] ||= plural_name
-              h[:timestamp] ||= "#{Journal.table_name}.created_at"
+              h[:timestamp] = "#{Journal.table_name}.created_at"
               h[:author_key] = "#{Journal.table_name}.user_id"
 
-              (h[:find_options] ||= {}).tap do |opts|
-                opts[:select] ? opts[:select] << ", " : opts[:select] = ""
-                opts[:select] << "#{Journal.table_name}.*"
+              h[:find_options] ||= {} # in case it is nil
+              h[:find_options] = {}.tap do |opts|
+                cond = ARCondition.new
+                cond.add(["#{Journal.table_name}.versioned_id = #{table_name}.id"])
+                cond.add(["#{Journal.table_name}.versioned_type = ?", name])
+                cond.add(["#{Journal.table_name}.activity_type = ?", h[:type]])
+                cond.add(h[:find_options][:conditions]) if h[:find_options][:conditions]
+                opts[:conditions] = cond.conditions
 
-                opts[:conditions] ? opts[:conditions] << " AND " : opts[:conditions] = ""
-                opts[:conditions] << "#{Journal.table_name}.activity_type = '#{h[:type]}'"
-
-                (opts[:include] ||= []) << :journals
-                opts[:include] << [:project] if reflect_on_association(:project)
+                opts[:select] = [:versioned]
+                opts[:include] + h[:find_options][:include] if h[:find_options][:include]
                 opts[:include].uniq!
               end
             end
