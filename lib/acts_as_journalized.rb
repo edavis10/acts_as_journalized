@@ -1,4 +1,5 @@
 Dir[File.expand_path("../redmine/acts/journalized/*.rb", __FILE__)].each{|f| require f }
+require_dependency 'lib/ar_condition'
 
 module Redmine
   module Acts
@@ -49,10 +50,19 @@ module Redmine
           include Permissions
           include SaveHooks
 
-          acts_as_event journalized_event_hash(event_hash)
+          journal_class.acts_as_event journalized_event_hash(event_hash)
 
           prepare_versioned_options(version_hash)
-          has_many :journals, version_hash, &block
+          has_many :journals, version_hash.merge({:class_name => journal_class.name,
+                :foreign_key => "versioned_id" }), &block
+        end
+
+        def journal_class
+          @journal_class ||= Object.const_set("#{name.gsub("::", "_")}Journal", Class.new(Journal)).tap do |c|
+            # Run after the inherited hook
+            # Associate with the parent record.
+            c.class_eval("belongs_to :versioned, :class_name => '#{name}'")
+          end
         end
 
         private
@@ -91,21 +101,21 @@ module Redmine
           def journalized_activity_hash(options)
             options.tap do |h|
               h[:type] ||= plural_name
-              h[:timestamp] = "#{Journal.table_name}.created_at"
-              h[:author_key] = "#{Journal.table_name}.user_id"
+              h[:timestamp] = "#{journal_class.table_name}.created_at"
+              h[:author_key] = "#{journal_class.table_name}.user_id"
 
               h[:find_options] ||= {} # in case it is nil
               h[:find_options] = {}.tap do |opts|
                 cond = ARCondition.new
-                cond.add(["#{Journal.table_name}.versioned_id = #{table_name}.id"])
-                cond.add(["#{Journal.table_name}.versioned_type = ?", name])
-                cond.add(["#{Journal.table_name}.activity_type = ?", h[:type]])
+                cond.add(["#{journal_class.table_name}.activity_type = ?", h[:type]])
                 cond.add(h[:find_options][:conditions]) if h[:find_options][:conditions]
                 opts[:conditions] = cond.conditions
 
-                opts[:select] = [:versioned]
-                opts[:include] + h[:find_options][:include] if h[:find_options][:include]
+                opts[:include] = [:versioned]
+                opts[:include] += h[:find_options][:include] if h[:find_options][:include]
                 opts[:include].uniq!
+
+                #opts[:joins] = h[:find_options][:joins] if h[:find_options][:joins]
               end
             end
           end
@@ -113,14 +123,15 @@ module Redmine
           # Merges the event hashes defaults with the options provided by the user
           # The defaults take their details from the journal
           def journalized_event_hash(options)
-            { :description => :notes,
-              :author => :user,
-              :url => Proc.new do |o|
+            unless options.has_key? :url
+              options[:url] = Proc.new do |o|
                 { :controller => plural_name,
                   :action => 'show',
                   :id => o.versioned.id,
                   :anchor => "change-#{o.versioned.id}" }
-              end }.reverse_merge options
+              end
+            end
+            { :description => :notes, :author => :user }.reverse_merge options
           end
       end
 
