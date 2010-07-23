@@ -3,7 +3,7 @@ class Journal < ActiveRecord::Base
   unloadable
 
   include Comparable
-  include JournalsHelper
+  include JournalFormatter
 
   # Make sure each journaled model instance only has unique version ids
   validates_uniqueness_of :version, :scope => [:versioned_id]
@@ -59,5 +59,4 @@ class Journal < ActiveRecord::Base
       e.name.to_sym == method ? super(method, *args, &block) : raise(e)
     end
   end
-
 end
