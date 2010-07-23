@@ -124,11 +124,11 @@ module Redmine
           # The defaults take their details from the journal
           def journalized_event_hash(options)
             unless options.has_key? :url
-              options[:url] = Proc.new do |o|
+              options[:url] = Proc.new do |journal|
                 { :controller => plural_name,
                   :action => 'show',
-                  :id => o.versioned.id,
-                  :anchor => "change-#{o.versioned.id}" }
+                  :id => journal.versioned.id,
+                  :anchor => "note-#{journal.version}" }
               end
             end
             { :description => :notes, :author => :user }.reverse_merge options
