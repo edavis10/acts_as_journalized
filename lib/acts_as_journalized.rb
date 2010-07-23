@@ -163,7 +163,8 @@ module Redmine
         # Called after_update
         def update_journal
           unless current_journal == @current_journal
-            (current_journal.tap {|j| j.user = @journal_user }).save!
+            # A new journal was created: make sure the user is set properly
+            current_journal.update_attribute(:user_id, @journal_user.id)
           end
 
           if @custom_values_before_save
