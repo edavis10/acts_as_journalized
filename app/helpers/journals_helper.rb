@@ -20,6 +20,37 @@ module JournalsHelper
   include ApplicationHelper
   include ActionView::Helpers::TagHelper
 
+  def render_journal(issue, journal)
+    label = journal.version == 1 ? :label_added_time_by : :label_updated_time_by
+    journal_content = render_journal_details(journal, label)
+    journal_content += render_notes(issue, journal, :reply_links => authorize_for('issues', 'edit')) unless journal.notes.blank?
+    content_tag "div", journal_content, { :id => "change-#{journal.id}", :class => "journal" }
+  end
+
+  # This renders a journal entry wiht a header and details
+  def render_journal_details(journal, header_label = :label_updated_time_by)
+    header = <<-HTML
+      <h4>
+        <div style="float:right;">#{link_to "##{journal.version}", :anchor => "note-#{journal.version}"}</div>
+        #{avatar(journal.user, :size => "24")}
+        #{content_tag('a', '', :name => "note-#{journal.version}")}
+        #{authoring journal.created_at, journal.user, :label => header_label}
+      </h4>
+    HTML
+
+    if journal.details.any?
+      details = content_tag "ul", :class => "details" do
+        journal.details.collect do |detail|
+          if d = journal.render_detail(detail)
+            content_tag("li", d)
+          end
+        end.compact
+      end
+    end
+
+    content_tag("div", "#{header}#{details}", :id => "change-#{journal.id}", :class => "journal")
+  end
+
   def render_notes(issue, journal, options={})
     if User.current.logged?
       editable = User.current.allowed_to?(:edit_issue_notes, issue.project) || nil
