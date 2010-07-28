@@ -58,10 +58,14 @@ module Redmine
         end
 
         def journal_class
-          @journal_class ||= Object.const_set("#{name.gsub("::", "_")}Journal", Class.new(Journal)).tap do |c|
-            # Run after the inherited hook
-            # Associate with the parent record.
-            c.class_eval("belongs_to :versioned, :class_name => '#{name}'")
+          journal_class_name = "#{name.gsub("::", "_")}Journal"
+          if Object.const_defined?(journal_class_name)
+            Object.const_get(journal_class_name)
+          else
+            Object.const_set(journal_class_name, Class.new(Journal)).tap do |c|
+              # Run after the inherited hook to associate with the parent record.
+              c.class_eval("belongs_to :versioned, :class_name => '#{name}'")
+            end
           end
         end
 
