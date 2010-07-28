@@ -3,48 +3,48 @@
 # of a specific journal.
 module JournalFormatter
   unloadable
-  cattr_accessor :formatters, :registered_fields
+  mattr_accessor :formatters, :registered_fields
   include ActionView::Helpers::TagHelper
 
-  formatters = default_formatters
-  registered_fields = default_fields
-
+  # TODO: Document Formatters (can take up to three params, value, versioned, field ...)
   def self.default_formatters
-    { :datetime => Proc.new {|v| format_date(v.to_date) }
-      :named_association => Proc.new {|v| find_name_by_reflection(field, v) }
-      :fraction => Proc.new {|v| "%0.02f" % v.to_f }
-      :id => Proc.new {|v| "##{v}" } }
+    { :plaintext => (Proc.new {|v| "#{v}" }),
+      :datetime => (Proc.new {|v| I18n.format_date(v.to_date) }),
+      :named_association => (Proc.new do |value, versioned, field|
+        association = versioned.class.reflect_on_association(field.to_sym)
+        if association
+          record = association.class_name.constantize.find_by_id(id)
+          record.name if record
+        end
+      end),
+      :fraction => (Proc.new {|v| "%0.02f" % v.to_f }),
+      :id => (Proc.new {|v| "##{v}" }) }
   end
 
   def self.default_fields
-    hash = { :parent_id => :id }
+    hash = { 'parent_id' => :id }
+
     { ['project_id', 'status_id', 'tracker_id', 'assigned_to_id', 'priority_id', 'category_id', 'fixed_version_id'] => :named_association,
       ['estimated_hours', 'done_ratio'] => :fraction,
       ['due_date', 'start_date'] => :datetime }.each_pair {|fields, format| fields.each {|f| hash[f] = format } }
     hash
   end
 
+  self.formatters = default_formatters
+  self.registered_fields = default_fields
+
   def format_attribute_detail(key, values, no_html=false)
     field = key.to_s.gsub(/\_id$/, "")
     label = l(("field_" + field).to_sym)
 
-    formatter = case key
-    when 'due_date', 'start_date'
-      Proc.new {|v| format_date(v.to_date) }
-    when 'project_id', 'status_id', 'tracker_id', 'assigned_to_id', 'priority_id', 'category_id', 'fixed_version_id'
-      Proc.new {|v| find_name_by_reflection(field, v) }
-    when 'estimated_hours', 'done_ratio'
-      Proc.new {|v| "%0.02f" % v.to_f }
-    when 'parent_id'
-      Proc.new {|v| "##{values.first}" }
+    if format = JournalFormatter.registered_fields[key]
+      formatter = JournalFormatter.formatters[format]
+      old_value = formatter.call(values.first, versioned, field) if values.first
+      value = formatter.call(values.last, versioned, field) if values.last
+      [label, old_value, value]
     else
-      return nil # If we don't know how to format this, ignore it
+      return nil
     end
-
-    old_value = formatter.call(values.first) if values.first
-    value = formatter.call(values.last) if values.last
-
-    [label, old_value, value]
   end
 
   def format_custom_value_detail(custom_field, values, no_html)
@@ -114,15 +114,6 @@ module JournalFormatter
       end
     else
       l(:text_journal_deleted, :label => label, :old => old_value)
-    end
-  end
-
-  # Find the name of an associated record stored in the field attribute
-  def find_name_by_reflection(field, id)
-    association = versioned.class.reflect_on_association(field.to_sym)
-    if association
-      record = association.class_name.constantize.find_by_id(id)
-      return record.name if record
     end
   end
 end
