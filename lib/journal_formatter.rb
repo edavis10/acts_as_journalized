@@ -3,7 +3,26 @@
 # of a specific journal.
 module JournalFormatter
   unloadable
+  cattr_accessor :formatters, :registered_fields
   include ActionView::Helpers::TagHelper
+
+  formatters = default_formatters
+  registered_fields = default_fields
+
+  def self.default_formatters
+    { :datetime => Proc.new {|v| format_date(v.to_date) }
+      :named_association => Proc.new {|v| find_name_by_reflection(field, v) }
+      :fraction => Proc.new {|v| "%0.02f" % v.to_f }
+      :id => Proc.new {|v| "##{v}" } }
+  end
+
+  def self.default_fields
+    hash = { :parent_id => :id }
+    { ['project_id', 'status_id', 'tracker_id', 'assigned_to_id', 'priority_id', 'category_id', 'fixed_version_id'] => :named_association,
+      ['estimated_hours', 'done_ratio'] => :fraction,
+      ['due_date', 'start_date'] => :datetime }.each_pair {|fields, format| fields.each {|f| hash[f] = format } }
+    hash
+  end
 
   def format_attribute_detail(key, values, no_html=false)
     field = key.to_s.gsub(/\_id$/, "")
@@ -68,7 +87,7 @@ module JournalFormatter
       attr_detail = format_attribute_detail(key, values, no_html)
     elsif key =~ /^\d+$/ && custom_field = CustomField.find_by_id(key.to_i)
       cv_detail = format_custom_value_detail(custom_field, values, no_html)
-    elsif
+    else
       attachment_detail = format_attachment_detail(key, values, no_html)
     end
 
