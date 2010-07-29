@@ -1,3 +1,5 @@
+require_dependency 'journal_formatter'
+
 # The ActiveRecord model representing versions.
 class Journal < ActiveRecord::Base
   unloadable

@@ -5,11 +5,22 @@ module JournalFormatter
   unloadable
   mattr_accessor :formatters, :registered_fields
   include ActionView::Helpers::TagHelper
+  extend Redmine::I18n
+
+  def self.register(hash)
+    if hash[:class]
+      klazz = hash.delete(:class)
+      registered_fields[klazz] ||= {}
+      registered_fields[klazz].merge!(hash)
+    else
+      formatters.merge(hash)
+    end
+  end
 
   # TODO: Document Formatters (can take up to three params, value, versioned, field ...)
   def self.default_formatters
-    { :plaintext => (Proc.new {|v| "#{v}" }),
-      :datetime => (Proc.new {|v| I18n.format_date(v.to_date) }),
+    { :plaintext => (Proc.new {|v,*| v.try(:to_s) }),
+      :datetime => (Proc.new {|v,*| format_date(v.to_date) }),
       :named_association => (Proc.new do |value, versioned, field|
         association = versioned.class.reflect_on_association(field.to_sym)
         if association
@@ -17,27 +28,18 @@ module JournalFormatter
           record.name if record
         end
       end),
-      :fraction => (Proc.new {|v| "%0.02f" % v.to_f }),
-      :id => (Proc.new {|v| "##{v}" }) }
-  end
-
-  def self.default_fields
-    hash = { 'parent_id' => :id }
-
-    { ['project_id', 'status_id', 'tracker_id', 'assigned_to_id', 'priority_id', 'category_id', 'fixed_version_id'] => :named_association,
-      ['estimated_hours', 'done_ratio'] => :fraction,
-      ['due_date', 'start_date'] => :datetime }.each_pair {|fields, format| fields.each {|f| hash[f] = format } }
-    hash
+      :fraction => (Proc.new {|v,*| "%0.02f" % v.to_f }),
+      :id => (Proc.new {|v,*| "##{v}" }) }
   end
 
   self.formatters = default_formatters
-  self.registered_fields = default_fields
+  self.registered_fields = {}
 
   def format_attribute_detail(key, values, no_html=false)
     field = key.to_s.gsub(/\_id$/, "")
     label = l(("field_" + field).to_sym)
 
-    if format = JournalFormatter.registered_fields[key]
+    if format = JournalFormatter.registered_fields[self.class.name.to_sym][key]
       formatter = JournalFormatter.formatters[format]
       old_value = formatter.call(values.first, versioned, field) if values.first
       value = formatter.call(values.last, versioned, field) if values.last

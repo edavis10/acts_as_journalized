@@ -4,6 +4,8 @@ are licensed under different conditions
 app/**
 lib/acts_as_journalized.rb
 lib/redmine/acts/journalized/permissions.rb
+lib/redmine/acts/journalized/save_hooks.rb
+lib/redmine/acts/journalized/format_hooks.rb
     Copyright (c) 2010 Finn GmbH
     All rights reserved.
 
