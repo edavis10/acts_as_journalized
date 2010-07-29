@@ -20,10 +20,10 @@ module JournalsHelper
   include ApplicationHelper
   include ActionView::Helpers::TagHelper
 
-  def render_journal(issue, journal)
+  def render_journal(model, journal, options = {})
     label = journal.version == 1 ? :label_added_time_by : :label_updated_time_by
     journal_content = render_journal_details(journal, label)
-    journal_content += render_notes(issue, journal, :reply_links => authorize_for('issues', 'edit')) unless journal.notes.blank?
+    journal_content += render_notes(model, journal, options) unless journal.notes.blank?
     content_tag "div", journal_content, { :id => "change-#{journal.id}", :class => "journal" }
   end
 
@@ -51,21 +51,24 @@ module JournalsHelper
     content_tag("div", "#{header}#{details}", :id => "change-#{journal.id}", :class => "journal")
   end
 
-  def render_notes(issue, journal, options={})
-    if User.current.logged?
-      editable = User.current.allowed_to?(:edit_issue_notes, issue.project) || nil
-      if journal.user == User.current
-        editable ||= User.current.allowed_to?(:edit_own_issue_notes, issue.project)
+  # FIXME: Generalize permissions to edit notes
+  def render_notes(model, journal, options={})
+    controller = model.class.name.downcase.pluralize
+    action = 'edit'
+    reply_links = authorize_for(controller, action)
+
+    if User.current.logged? && options[:edit_permission]
+      editable = User.current.allowed_to?(options[:edit_permission], journal.project) || nil
+      if journal.user == User.current && options[:edit_own_permission]
+        editable ||= User.current.allowed_to?(options[:edit_own_permission], journal.project)
       end
     end
 
     unless journal.notes.blank?
       links = returning [] do |l|
-        if options[:reply_links]
-          l << link_to_remote(image_tag('comment.png'),
-                { :url => { :controller => 'issues', :action => 'reply',
-                            :id => issue, :journal_id => journal} },
-                  :title => l(:button_quote))
+        if reply_links
+          l << link_to_remote(image_tag('comment.png'), :title => l(:button_quote),
+            :url => {:controller => controller, :action => action, :id => model, :journal_id => journal})
         end
         if editable
           l << link_to_in_place_notes_editor(image_tag('edit.png'), "journal-#{journal.id}-notes",
