@@ -20,6 +20,14 @@ module JournalsHelper
   include ApplicationHelper
   include ActionView::Helpers::TagHelper
 
+  def self.included(base)
+    base.class_eval do
+      if respond_to? :before_filter
+        before_filter :find_optional_journal, :only => [:edit]
+      end
+    end
+  end
+
   def render_journal(model, journal, options = {})
     label = journal.version == 1 ? :label_added_time_by : :label_updated_time_by
     journal_content = render_journal_details(journal, label)
@@ -93,4 +101,26 @@ module JournalsHelper
     link_to text, '#', options.merge(:onclick => onclick)
   end
 
+  # This may conveniently be used by controllers to find journals referred to in the current request
+  def find_optional_journal
+    @journal = Journal.find_by_id(params[:journal_id])
+  end
+
+  def render_reply(journal)
+    user = journal.user
+    text = journal.notes
+
+    # Replaces pre blocks with [...]
+    text = text.to_s.strip.gsub(%r{<pre>((.|\s)*?)</pre>}m, '[...]')
+    content = "#{ll(Setting.default_language, :text_user_wrote, user)}\n> "
+    content << text.gsub(/(\r?\n|\r\n?)/, "\n> ") + "\n\n"
+
+    render(:update) do |page|
+      page << "$('notes').value = \"#{escape_javascript content}\";"
+      page.show 'update'
+      page << "Form.Element.focus('notes');"
+      page << "Element.scrollTo('update');"
+      page << "$('notes').scrollTop = $('notes').scrollHeight - $('notes').clientHeight;"
+    end
+  end
 end
