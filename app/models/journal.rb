@@ -2,7 +2,7 @@
 # project management software
 #
 # Copyright (c) 2009 Steve Richert
-# Copyright (c) 2010 Finn GmbH
+# Copyright (c) 2010 Finn GmbH, http://finn.de
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
