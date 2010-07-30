@@ -1,17 +1,71 @@
-This plugin uses parts from different other software projects, which 
-are licensed under different conditions
+"Acts_as_journalized" is a Redmine core plugin derived from the vestal_versions 
+Ruby on Rails plugin. The parts are under different copyright and license conditions
+noted below.
 
-app/**
+The overall license terms applying to "Acts_as_journalized" as in
+this distribution are the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2 of
+the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+
+
+For the indivdual files, the following copyrights and licenses apply:
+
+app/controllers/**
+app/views/**
+app/helpers/**
+app/models/journal_observer.rb
+    Copyright (C) 2006-2008  Jean-Philippe Lang
+
+    This program is free software; you can redistribute it and/or
+    modify it under the terms of the GNU General Public License
+    as published by the Free Software Foundation; either version 2
+    of the License, or (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program; if not, write to the Free Software
+    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+
 lib/acts_as_journalized.rb
+lib/journal_formatter.rb
 lib/redmine/acts/journalized/permissions.rb
 lib/redmine/acts/journalized/save_hooks.rb
 lib/redmine/acts/journalized/format_hooks.rb
     Copyright (c) 2010 Finn GmbH
-    All rights reserved.
+
+    This program is free software; you can redistribute it and/or
+    modify it under the terms of the GNU General Public License
+    as published by the Free Software Foundation; either version 2
+    of the License, or (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program; if not, write to the Free Software
+    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
 
 All remaining files are:
     Copyright (c) 2009 Steve Richert
-  
+
     Permission is hereby granted, free of charge, to any person obtaining
     a copy of this software and associated documentation files (the
     "Software"), to deal in the Software without restriction, including

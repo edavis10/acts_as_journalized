@@ -1,4 +1,6 @@
-# redMine - project management software
+# This file is part of the acts_as_journalized plugin for the redMine 
+# project management software
+#
 # Copyright (C) 2006-2008  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
