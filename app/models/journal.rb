@@ -1,4 +1,4 @@
-# This file is part of the acts_as_journalized plugin for the redMine 
+# This file is part of the acts_as_journalized plugin for the redMine
 # project management software
 #
 # Copyright (c) 2009 Steve Richert

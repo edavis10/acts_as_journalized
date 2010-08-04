@@ -1,4 +1,4 @@
-# This file is part of the acts_as_journalized plugin for the redMine 
+# This file is part of the acts_as_journalized plugin for the redMine
 # project management software
 #
 # Copyright (C) 2010  Finn GmbH, http://finn.de
@@ -111,7 +111,7 @@ module Redmine
             [activity_hash, event_hash, version_hash]
           end
 
-          # Merges the passed activity_hash with the options we require for 
+          # Merges the passed activity_hash with the options we require for
           # acts_as_journalized to work, as follows:
           # # type is the supplied or the pluralized class name
           # # timestamp is supplied or the journal's created_at

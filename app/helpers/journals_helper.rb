@@ -1,4 +1,4 @@
-# This file is part of the acts_as_journalized plugin for the redMine 
+# This file is part of the acts_as_journalized plugin for the redMine
 # project management software
 #
 # Copyright (C) 2006-2008  Jean-Philippe Lang

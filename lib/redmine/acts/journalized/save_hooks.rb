@@ -1,4 +1,4 @@
-# This file is part of the acts_as_journalized plugin for the redMine 
+# This file is part of the acts_as_journalized plugin for the redMine
 # project management software
 #
 # Copyright (C) 2010  Finn GmbH, http://finn.de
@@ -23,13 +23,13 @@ module Redmine::Acts::Journalized
   module SaveHooks
     def self.included(base)
       base.extend ClassMethods
-      
+
       base.class_eval do
         before_save :init_journal
         after_save :update_journal
       end
     end
-    
+
     # Saves the current custom values, notes and journal to include them in the next version
     # Called before save
     def init_journal(user = User.current, notes = "")
@@ -43,15 +43,15 @@ module Redmine::Acts::Journalized
       end
       @current_journal = current_journal
     end
-    
+
     # Saves the notes and custom value changes in the last Journal
-    # Called after_update
+    # Called after_save
     def update_journal
       unless current_journal == @current_journal
         # A new journal was created: make sure the user is set properly
         current_journal.update_attribute(:user_id, @journal_user.id)
       end
-      
+
       if @custom_values_before_save
         # Has custom values from init_journal_notes
         changed_custom_values = current_custom_values - @custom_values_before_save
@@ -62,7 +62,7 @@ module Redmine::Acts::Journalized
       end
       @current_journal = @journal_user = @notes = nil
     end
-    
+
     # Saves the notes and changed custom values to the journal
     # Creates a new journal, if no immediate attributes were changed
     def update_extended_journal_contents(changed_custom_values)
@@ -77,9 +77,9 @@ module Redmine::Acts::Journalized
         j.user = @journal_user
       end.save!
     end
-    
+
     # Allow to semantically substract a hash of custom value changes from another
-    # This the method '-' to the singleton class of the custom values hash, so the 
+    # This the method '-' to the singleton class of the custom values hash, so the
     # code for getting the difference between old and new custom values looks semantically correct
     def current_custom_values
       cvs = custom_values
@@ -95,8 +95,8 @@ module Redmine::Acts::Journalized
       end
       cvs
     end
-      
+
     module ClassMethods
-    end    
+    end
   end
 end
