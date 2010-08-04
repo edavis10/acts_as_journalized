@@ -73,9 +73,11 @@ module Redmine
 
           journal_class.acts_as_event journalized_event_hash(event_hash)
 
+          (version_hash[:except] ||= []) << self.primary_key << inheritance_column <<
+            :updated_on << :updated_at << :lock_version
           prepare_versioned_options(version_hash)
           has_many :journals, version_hash.merge({:class_name => journal_class.name,
-                :foreign_key => "versioned_id" }), &block
+            :foreign_key => "versioned_id"}), &block
         end
 
         def journal_class
