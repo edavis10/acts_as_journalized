@@ -56,8 +56,8 @@ module Redmine::Acts::Journalized
         # Has custom values from init_journal_notes
         changed_custom_values = current_custom_values - @custom_values_before_save
       end
-      
-      unless changed_custom_values.empty? && @notes.empty?
+
+      if (changed_custom_values && !changed_custom_values.empty?) || !@notes.empty?
         update_extended_journal_contents(changed_custom_values)
       end
       @current_journal = @journal_user = @notes = nil

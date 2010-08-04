@@ -55,6 +55,11 @@ module Redmine::Acts::Journalized
         journals.last
       end
 
+      # FIXME: This is for backwards compatibility with WikiContent::Versions. To be removed.
+      def versions
+        journals
+      end
+
       # Accepts a value corresponding to a specific version record, builds a history of changes
       # between that version and the current version, and then iterates over that history updating
       # the object's attributes until the it's reverted to its prior state.
