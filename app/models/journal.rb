@@ -37,6 +37,10 @@ class Journal < ActiveRecord::Base
   # undef_method :changes
   serialize :changes, Hash
 
+  def changes
+    attributes["changes"]
+  end
+
   # In conjunction with the included Comparable module, allows comparison of version records
   # based on their corresponding version numbers, creation timestamps and IDs.
   def <=>(other)
