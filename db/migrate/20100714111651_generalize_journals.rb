@@ -1,30 +1,45 @@
 class GeneralizeJournals < ActiveRecord::Migration
   def self.up
-    drop_table :journals
-    drop_table :journal_details
-    create_table :journals do |t|
-      t.integer :user_id, :default => 0,  :null => false
-      t.integer :versioned_id, :default => 0,  :null => false
-      t.integer :version, :default => 0,  :null => false
+    change_table :journals do |t|
+      t.rename :journalized_id, :versioned_id
+      t.rename :created_on, :created_at
+
+      t.integer :version, :default => 0, :null => false
       t.string :activity_type
-      t.text :notes
       t.text :changes
       t.string :type
-      t.timestamps
-    end
 
-    change_table :journals do |t|
       t.index :versioned_id
       t.index :user_id
       t.index :activity_type
       t.index :created_at
       t.index :type
     end
+
+    Journal.all.group_by(&:versioned_id).each_pair do |id, journals|
+      journals.sort_by(:created_at).each_with_index do |j, idx|
+        j.update_attribute(:type, "#{j.journalized_type}Journal")
+        j.update_attribute(:version, idx + 1)
+        # FIXME: Find some way to choose the right activity here
+        j.update_attribute(:activity_type, j.journalized_type.constantize.activity_provider_options.keys.first)
+      end
+    end
+
+    change_table :journals do |t|
+      t.remove :journalized_type
+    end
+
+    JournalsDetails.all.each do |detail|
+      journal = detail.journal
+      journal.changes ||= {}
+      journal.changes[detail.prop_key.to_sym] = [detail.old_value, detail.value]
+      journal.save
+    end
+
+    drop_table :journal_details
   end
 
   def self.down
-    drop_table :journals
-    
     create_table "journal_details", :force => true do |t|
       t.integer "journal_id",               :default => 0,  :null => false
       t.string  "property",   :limit => 30, :default => "", :null => false
