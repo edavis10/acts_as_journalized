@@ -62,7 +62,6 @@ module JournalsHelper
     content_tag("div", "#{header}#{details}", :id => "change-#{journal.id}", :class => "journal")
   end
 
-  # FIXME: Generalize permissions to edit notes
   def render_notes(model, journal, options={})
     controller = model.class.name.downcase.pluralize
     action = 'edit'
