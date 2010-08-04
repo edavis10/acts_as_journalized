@@ -1,4 +1,4 @@
-"Acts_as_journalized" is a Redmine core plugin derived from the vestal_versions 
+"Acts_as_journalized" is a Redmine core plugin derived from the vestal_versions
 Ruby on Rails plugin. The parts are under different copyright and license conditions
 noted below.
 
@@ -18,7 +18,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 
 
-For the indivdual files, the following copyrights and licenses apply:
+For the individual files, the following copyrights and licenses apply:
 
 app/controllers/**
 app/views/**
@@ -73,10 +73,10 @@ All remaining files are:
     distribute, sublicense, and/or sell copies of the Software, and to
     permit persons to whom the Software is furnished to do so, subject to
     the following conditions:
-    
+
     The above copyright notice and this permission notice shall be
     included in all copies or substantial portions of the Software.
-  
+
     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
     EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
     MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
