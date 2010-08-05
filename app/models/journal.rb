@@ -37,10 +37,6 @@ class Journal < ActiveRecord::Base
   # undef_method :changes
   serialize :changes, Hash
 
-  def changes
-    attributes["changes"]
-  end
-
   # In conjunction with the included Comparable module, allows comparison of version records
   # based on their corresponding version numbers, creation timestamps and IDs.
   def <=>(other)
@@ -73,11 +69,33 @@ class Journal < ActiveRecord::Base
     attributes["changes"]
   end
 
-  # Backwards compatibility with old-style timestamps
+  alias_method :changes, :details
+
+  # FIXME: Backwards compatibility with old-style timestamps
   def created_on
     created_at
   end
 
+  # FIXME: Backwards compatibility with old journals
+  def journalized
+    versioned
+  end
+
+  # FIXME: Backwards compatibility with old journals
+  def attachments
+    journalized.respond_to?(:attachments) ? journalized.attachments : nil
+  end
+
+  def new_value_for(prop)
+    details[prop.to_s].last if details.keys.include? prop.to_s
+  end
+
+  def old_value_for(prop)
+    details[prop.to_s].first if details.keys.include? prop.to_s
+  end
+
+  # This is here to allow people to disregard the difference between working with a
+  # Journal and the object it is attached to
   def method_missing(method, *args, &block)
     begin
       versioned.send(method, *args, &block)
@@ -85,4 +103,5 @@ class Journal < ActiveRecord::Base
       e.name.to_sym == method ? super(method, *args, &block) : raise(e)
     end
   end
+
 end
