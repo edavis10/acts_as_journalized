@@ -1,18 +1,22 @@
 class MergeWikiVersionsWithJournals < ActiveRecord::Migration
   def self.up
+    # This is provided here for migrating up after the WikiContent::Version class has been removed
+    unless WikiContent.const_defined?("Version")
+      WikiContent.const_set("Version", Class.new(ActiveRecord::Base))
+    end
 
     WikiContent::Version.find_by_sql("SELECT * FROM wiki_content_versions").each do |wv|
       journal = WikiContentJournal.create!(:versioned_id => wv.wiki_content_id, :user_id => wv.author_id,
         :notes => wv.comments, :activity_type => "wiki_edits")
-      journal.changes = {}
-      journal.changes["compression"] = wv.compression
-      journal.changes["data"] = wv.data
-      journal.save
-      journal.update_attribute(:version) = wv.version
+      changes = {}
+      changes["compression"] = wv.compression
+      changes["data"] = wv.data
+      journal.update_attribute(:changes, changes.to_yaml)
+      journal.update_attribute(:version, wv.version)
     end
     drop_table :wiki_content_versions
 
-    change_table :wiki_contents do
+    change_table :wiki_contents do |t|
       t.rename :version, :lock_version
     end
   end

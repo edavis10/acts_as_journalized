@@ -1,5 +1,10 @@
 class GeneralizeJournals < ActiveRecord::Migration
   def self.up
+    # This is provided here for migrating up after the JournalDetails has been removed
+    unless Object.const_defined?("JournalDetails")
+      Object.const_set("JournalDetails", Class.new(ActiveRecord::Base))
+    end
+
     change_table :journals do |t|
       t.rename :journalized_id, :versioned_id
       t.rename :created_on, :created_at
@@ -9,8 +14,10 @@ class GeneralizeJournals < ActiveRecord::Migration
       t.text :changes
       t.string :type
 
+      t.remove_index "created_on"
+      t.remove_index "journalized_id"
+
       t.index :versioned_id
-      t.index :user_id
       t.index :activity_type
       t.index :created_at
       t.index :type
@@ -29,11 +36,11 @@ class GeneralizeJournals < ActiveRecord::Migration
       t.remove :journalized_type
     end
 
-    JournalsDetails.all.each do |detail|
-      journal = detail.journal
-      journal.changes ||= {}
-      journal.changes[detail.prop_key.to_sym] = [detail.old_value, detail.value]
-      journal.save
+    JournalDetails.all.each do |detail|
+      journal = Journal.find(detail.journal_id)
+      changes = journal.changes || {}
+      changes[detail.prop_key.to_sym] = [detail.old_value, detail.value]
+      journal.update_attribute(:changes, changes.to_yaml)
     end
 
     drop_table :journal_details
@@ -72,6 +79,11 @@ class GeneralizeJournals < ActiveRecord::Migration
     end
 
     change_table "journals", :force => true do |t|
+      t.remove_index :versioned_id
+      t.remove_index :activity_type
+      t.remove_index :created_at
+      t.remove_index :type
+
       t.remove :type
       t.remove :version
       t.remove :activity_type
@@ -82,6 +94,5 @@ class GeneralizeJournals < ActiveRecord::Migration
     add_index "journals", ["created_on"], :name => "index_journals_on_created_on"
     add_index "journals", ["journalized_id", "journalized_type"], :name => "journals_journalized_id"
     add_index "journals", ["journalized_id"], :name => "index_journals_on_journalized_id"
-    add_index "journals", ["user_id"], :name => "index_journals_on_user_id"
   end
 end
