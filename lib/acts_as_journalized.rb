@@ -70,6 +70,7 @@ module Redmine
           include Permissions
           include SaveHooks
           include FormatHooks
+          include MailerSupport
 
           journal_class.acts_as_event journalized_event_hash(event_hash)
 
