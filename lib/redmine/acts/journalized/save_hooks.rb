@@ -71,11 +71,10 @@ module Redmine::Acts::Journalized
         # on which notes and changed custom values will be written
         create_version
       end
-      current_journal.tap do |j|
-        j.notes = @notes
-        j.details.merge!(changed_custom_values)
-        j.user = @journal_user
-      end.save!
+      current_journal.update_attribute(:user_id, @journal_user.id)
+      current_journal.update_attribute(:notes, @notes)
+      combined_changes = current_journal.changes.merge(changed_custom_values)
+      current_journal.update_attribute(:changes, combined_changes.to_yaml)
     end
 
     # Allow to semantically substract a hash of custom value changes from another

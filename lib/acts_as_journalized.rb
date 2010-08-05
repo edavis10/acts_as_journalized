@@ -139,9 +139,16 @@ module Redmine
                 cond.add(h[:find_options][:conditions]) if h[:find_options][:conditions]
                 opts[:conditions] = cond.conditions
 
-                opts[:include] = [:versioned]
-                opts[:include] += h[:find_options][:include] if h[:find_options][:include]
-                opts[:include].uniq!
+                include_opts = []
+                include_opts << :project if reflect_on_association(:project)
+                if h[:find_options][:include]
+                  include_opts += case h[:find_options][:include]
+                    when Array then h[:find_options][:include]
+                    else [h[:find_options][:include]]
+                  end
+                end
+                include_opts.uniq!
+                opts[:include] = [:versioned => include_opts]
 
                 #opts[:joins] = h[:find_options][:joins] if h[:find_options][:joins]
               end

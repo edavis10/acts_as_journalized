@@ -101,8 +101,13 @@ module JournalFormatter
   end
 
   def render_detail(detail, no_html=false)
-    key = detail.first
-    values = detail.last
+    if detail.respond_to? :to_ary
+      key = detail.first
+      values = detail.last
+    else
+      key = detail
+      values = details[key.to_s]
+    end
 
     if versioned.class.columns.collect(&:name).include? key
       attr_detail = format_attribute_detail(key, values, no_html)
