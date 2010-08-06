@@ -38,13 +38,6 @@ module Redmine::Acts::Journalized
       last_journal
     end
 
-    def method_missing(method, *args, &block)
-      super unless last_journal.try(:respond_to?, method)
-      last_journal.send(method, *args, &block).tap do
-        warn "DEPRECATION WARNING: #{self.class}##{method} is deprecated. Use #{self.class}#last_journal.#{method} (called from #{caller.first})"
-      end
-    end
-
     deprecate :recipients => "use #last_journal.recipients"
     deprecate :versions => "use #journals"
     deprecate :current_journal => "use #last_journal"
