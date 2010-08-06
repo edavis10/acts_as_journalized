@@ -70,7 +70,9 @@ module Redmine
           include Permissions
           include SaveHooks
           include FormatHooks
-          include MailerSupport
+
+          # FIXME: When the transition to the new API is complete, remove me
+          include Deprecated
 
           journal_class.acts_as_event journalized_event_hash(event_hash)
 

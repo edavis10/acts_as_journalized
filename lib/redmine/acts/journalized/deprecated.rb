@@ -1,0 +1,73 @@
+# This file is part of the acts_as_journalized plugin for the redMine
+# project management software
+#
+# Copyright (C) 2010  Finn GmbH, http://finn.de
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+# These hooks make sure journals are properly created and updated with Redmine user detail,
+# notes and associated custom fields
+
+module Redmine::Acts::Journalized
+  module Deprecated
+
+    def self.deprecation_warning(*symbols)
+      symbols.each do |m|        
+        eval <<-RUBY
+          def #{m}_with_deprecation_warning(*args, &block)
+            warn "DEPRECATION WARNING: #{m} is deprecated and will be removed from Redmine (called from #{caller.first})"
+          end
+        RUBY
+        alias_method_chain m, :deprecation_warning
+      end
+    end
+    
+    # Old mailer API
+    def recipients
+      notified = project.notified_users
+      notified.reject! {|user| !visible?(user)}
+      notified.collect(&:mail)
+    end
+    
+    # Old timestamps. created_at is what t.timestamps creates in recent Rails versions
+    def created_on
+      created_at
+    end
+
+    # Old naming
+    def journalized
+      versioned
+    end
+
+    # Shortcut from more issue-specific journals
+    def attachments
+      journalized.respond_to?(:attachments) ? journalized.attachments : nil
+    end
+
+    # For compatibility with the removed WikiContent::Version
+    def versions
+      journals
+    end
+    
+    #def method_missing(method, *args, &block)
+    #  super unless last_journal.respond_to? method
+    #  last_journal.send(method, *args, &block).tap do
+        #warn "DEPRECATION WARNING: #{method} is deprecated and will be removed from Redmine (called from #{caller.first})"
+      #end
+    #end
+
+    #deprecation_warning :recipients, :created_on, :journalized, :attachments, :versions
+  end
+end

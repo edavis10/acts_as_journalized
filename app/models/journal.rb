@@ -71,21 +71,6 @@ class Journal < ActiveRecord::Base
 
   alias_method :changes, :details
 
-  # FIXME: Backwards compatibility with old-style timestamps
-  def created_on
-    created_at
-  end
-
-  # FIXME: Backwards compatibility with old journals
-  def journalized
-    versioned
-  end
-
-  # FIXME: Backwards compatibility with old journals
-  def attachments
-    journalized.respond_to?(:attachments) ? journalized.attachments : nil
-  end
-
   def new_value_for(prop)
     details[prop.to_s].last if details.keys.include? prop.to_s
   end
