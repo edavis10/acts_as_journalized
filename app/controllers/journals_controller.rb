@@ -23,7 +23,7 @@ class JournalsController < ApplicationController
 
   def edit
     if request.post?
-      @journal.update_attributes(:notes => params[:notes]) if params[:notes]
+      @journal.update_attribute(:notes, params[:notes]) if params[:notes]
       @journal.destroy if @journal.details.empty? && @journal.notes.blank?
       call_hook(:controller_journals_edit_post, { :journal => @journal, :params => params})
       respond_to do |format|
@@ -33,7 +33,7 @@ class JournalsController < ApplicationController
       end
     end
   end
-  
+
 private
   def find_journal
     @journal = Journal.find(params[:id])
