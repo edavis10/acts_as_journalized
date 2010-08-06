@@ -51,7 +51,7 @@ module Redmine::Acts::Journalized
         @version ||= last_version
       end
 
-      def current_journal
+      def last_journal
         journals.last
       end
 

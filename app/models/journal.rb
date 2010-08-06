@@ -26,6 +26,7 @@ class Journal < ActiveRecord::Base
 
   include Comparable
   include JournalFormatter
+  include JournalDeprecated
 
   # Make sure each journaled model instance only has unique version ids
   validates_uniqueness_of :version, :scope => [:versioned_id]
@@ -82,11 +83,8 @@ class Journal < ActiveRecord::Base
   # This is here to allow people to disregard the difference between working with a
   # Journal and the object it is attached to
   def method_missing(method, *args, &block)
-    begin
-      versioned.send(method, *args, &block)
-    rescue NoMethodError => e
-      e.name.to_sym == method ? super(method, *args, &block) : raise(e)
-    end
+    super unless versioned.respond_to? method
+    versioned.send(method, *args, &block)
   end
 
 end

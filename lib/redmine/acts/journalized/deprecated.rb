@@ -22,52 +22,31 @@
 
 module Redmine::Acts::Journalized
   module Deprecated
-
-    def self.deprecation_warning(*symbols)
-      symbols.each do |m|        
-        eval <<-RUBY
-          def #{m}_with_deprecation_warning(*args, &block)
-            warn "DEPRECATION WARNING: #{m} is deprecated and will be removed from Redmine (called from #{caller.first})"
-          end
-        RUBY
-        alias_method_chain m, :deprecation_warning
-      end
-    end
-    
     # Old mailer API
     def recipients
       notified = project.notified_users
       notified.reject! {|user| !visible?(user)}
       notified.collect(&:mail)
     end
-    
-    # Old timestamps. created_at is what t.timestamps creates in recent Rails versions
-    def created_on
-      created_at
-    end
-
-    # Old naming
-    def journalized
-      versioned
-    end
-
-    # Shortcut from more issue-specific journals
-    def attachments
-      journalized.respond_to?(:attachments) ? journalized.attachments : nil
-    end
 
     # For compatibility with the removed WikiContent::Version
     def versions
       journals
     end
-    
-    #def method_missing(method, *args, &block)
-    #  super unless last_journal.respond_to? method
-    #  last_journal.send(method, *args, &block).tap do
-        #warn "DEPRECATION WARNING: #{method} is deprecated and will be removed from Redmine (called from #{caller.first})"
-      #end
-    #end
 
-    #deprecation_warning :recipients, :created_on, :journalized, :attachments, :versions
+    def current_journal
+      last_journal
+    end
+
+    def method_missing(method, *args, &block)
+      super unless last_journal.try(:respond_to?, method)
+      last_journal.send(method, *args, &block).tap do
+        warn "DEPRECATION WARNING: #{self.class}##{method} is deprecated. Use #{self.class}#last_journal.#{method} (called from #{caller.first})"
+      end
+    end
+
+    deprecate :recipients => "use #last_journal.recipients"
+    deprecate :versions => "use #journals"
+    deprecate :current_journal => "use #last_journal"
   end
 end
