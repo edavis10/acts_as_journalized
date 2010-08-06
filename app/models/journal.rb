@@ -83,8 +83,9 @@ class Journal < ActiveRecord::Base
   # This is here to allow people to disregard the difference between working with a
   # Journal and the object it is attached to
   def method_missing(method, *args, &block)
-    super unless versioned.respond_to? method
     versioned.send(method, *args, &block)
+  rescue NoMethodError => e
+    e.name == method ? super : raise(e)
   end
 
 end
