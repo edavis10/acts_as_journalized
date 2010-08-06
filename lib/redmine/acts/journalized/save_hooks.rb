@@ -34,7 +34,7 @@ module Redmine::Acts::Journalized
     # Called before save
     def init_journal(user = User.current, notes = "")
       @notes ||= notes
-      @journal_user ||= User.current
+      @journal_user ||= user
       if self.respond_to? :custom_values
         @custom_values_before_save = custom_values.inject({}) do |hash, cv|
           hash[cv.custom_field_id] = cv.value
