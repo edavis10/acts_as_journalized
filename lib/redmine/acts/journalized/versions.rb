@@ -87,7 +87,7 @@ module Redmine::Acts::Journalized
     def at(value)
       case value
         when Date, Time then last(:conditions => ["#{aliased_table_name}.created_at <= ?", value.to_time])
-        when Numeric then find_by_journal(value.floor)
+        when Numeric then find_by_version(value.floor)
         when Symbol then respond_to?(value) ? send(value) : nil
         when Journal then value
       end
