@@ -49,7 +49,12 @@ module Redmine::Acts::Journalized
     def update_journal
       unless current_journal == @current_journal
         # A new journal was created: make sure the user is set properly
+        # FIXME: This is ugly
         current_journal.update_attribute(:user_id, @journal_user.id)
+        unless current_journal.user_id == @journal_user.id
+          current_journal.reload
+          current_journal.update_attribute(:user_id, @journal_user.id)
+        end
       end
 
       if @custom_values_before_save
