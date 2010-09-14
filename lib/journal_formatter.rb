@@ -98,6 +98,7 @@ module JournalFormatter
     label = content_tag('strong', label)
     old_value = content_tag("i", h(old_value)) if old_value && !old_value.blank?
     old_value = content_tag("strike", old_value) if old_value and value.blank?
+    value = content_tag("i", h(value))
     [label, old_value, value]
   end
 
