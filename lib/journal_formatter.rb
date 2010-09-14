@@ -43,11 +43,12 @@ module JournalFormatter
       :named_association => (Proc.new do |value, journaled, field|
         association = journaled.class.reflect_on_association(field.to_sym)
         if association
-          record = association.class_name.constantize.find_by_id(value)
+          record = association.class_name.constantize.find_by_id(value.to_i)
           record.name if record
         end
       end),
       :fraction => (Proc.new {|v,*| "%0.02f" % v.to_f }),
+      :decimal => (Proc.new {|v,*| v.to_i.to_s }),
       :id => (Proc.new {|v,*| "##{v}" }) }
   end
 
