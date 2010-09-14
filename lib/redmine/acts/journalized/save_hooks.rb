@@ -30,7 +30,7 @@ module Redmine::Acts::Journalized
       end
     end
 
-    # Saves the current custom values, notes and journal to include them in the next version
+    # Saves the current custom values, notes and journal to include them in the next journal
     # Called before save
     def init_journal(user = User.current, notes = "")
       @notes ||= notes
@@ -69,7 +69,7 @@ module Redmine::Acts::Journalized
       if current_journal == @current_journal
         # No attribute changes, create a new journal entry
         # on which notes and changed custom values will be written
-        create_version
+        create_journal
       end
       current_journal.update_attribute(:user_id, @journal_user.id)
       current_journal.update_attribute(:notes, @notes)

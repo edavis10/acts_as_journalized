@@ -11,8 +11,8 @@ class CreateSchema < ActiveRecord::Migration
       t.timestamps
     end
 
-    create_table :versions, :force => true do |t|
-      t.belongs_to :versioned, :polymorphic => true
+    create_table :journals, :force => true do |t|
+      t.belongs_to :journaled, :polymorphic => true
       t.belongs_to :user, :polymorphic => true
       t.string :user_name
       t.text :changes
@@ -28,7 +28,7 @@ CreateSchema.suppress_messages do
 end
 
 class User < ActiveRecord::Base
-  versioned
+  journaled
 
   def name
     [first_name, last_name].compact.join(' ')

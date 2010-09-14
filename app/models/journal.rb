@@ -6,8 +6,8 @@
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
-# as published by the Free Software Foundation; either version 2
-# of the License, or (at your option) any later version.
+# as published by the Free Software Foundation; either journal 2
+# of the License, or (at your option) any later journal.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -20,7 +20,7 @@
 
 require_dependency 'journal_formatter'
 
-# The ActiveRecord model representing versions.
+# The ActiveRecord model representing journals.
 class Journal < ActiveRecord::Base
   unloadable
 
@@ -38,7 +38,7 @@ class Journal < ActiveRecord::Base
   # undef_method :changes
   serialize :changes, Hash
 
-  # In conjunction with the included Comparable module, allows comparison of version records
+  # In conjunction with the included Comparable module, allows comparison of journal records
   # based on their corresponding version numbers, creation timestamps and IDs.
   def <=>(other)
     [version, created_at, id].map(&:to_i) <=> [other.version, other.created_at, other.id].map(&:to_i)
@@ -53,17 +53,17 @@ class Journal < ActiveRecord::Base
 
   # Possible shortcut to the associated project
   def project
-    if versioned.respond_to?(:project)
-      versioned.project
-    elsif versioned.is_a? Project
-      versioned
+    if journaled.respond_to?(:project)
+      journaled.project
+    elsif journaled.is_a? Project
+      journaled
     else
       nil
     end
   end
 
   def editable_by?(user)
-    versioned.journal_editable_by?(user)
+    journaled.journal_editable_by?(user)
   end
 
   def details
@@ -83,7 +83,7 @@ class Journal < ActiveRecord::Base
   # This is here to allow people to disregard the difference between working with a
   # Journal and the object it is attached to
   def method_missing(method, *args, &block)
-    versioned.send(method, *args, &block)
+    journaled.send(method, *args, &block)
   rescue NoMethodError => e
     e.name == method ? super : raise(e)
   end

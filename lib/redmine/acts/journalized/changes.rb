@@ -1,8 +1,8 @@
 # This file included as part of the acts_as_journalized plugin for
 # the redMine project management software; You can redistribute it
 # and/or modify it under the terms of the GNU General Public License
-# as published by the Free Software Foundation; either version 2
-# of the License, or (at your option) any later version.
+# as published by the Free Software Foundation; either journal 2
+# of the License, or (at your option) any later journal.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -45,19 +45,19 @@ module Redmine::Acts::Journalized
       base.class_eval do
         include InstanceMethods
 
-        after_update :merge_version_changes
+        after_update :merge_journal_changes
       end
     end
 
-    # Methods available to versioned ActiveRecord::Base instances in order to manage changes used
-    # for version creation.
+    # Methods available to journaled ActiveRecord::Base instances in order to manage changes used
+    # for journal creation.
     module InstanceMethods
-      # Collects an array of changes from a record's versions between the given range and compiles
+      # Collects an array of changes from a record's journals between the given range and compiles
       # them into one summary hash of changes. The +from+ and +to+ arguments can each be either a
       # version number, a symbol representing an association proxy method, a string representing a
-      # version tag or a version object itself.
+      # journal tag or a journal object itself.
       def changes_between(from, to)
-        from_number, to_number = journals.version_at(from), journals.version_at(to)
+        from_number, to_number = journals.journal_at(from), journals.journal_at(to)
         return {} if from_number == to_number
         chain = journals.between(from_number, to_number).reject(&:initial?)
         return {} if chain.empty?
@@ -65,35 +65,35 @@ module Redmine::Acts::Journalized
         backward = from_number > to_number
         backward ? chain.pop : chain.shift unless from_number == 1 || to_number == 1
 
-        chain.inject({}) do |changes, version|
-          changes.append_changes!(backward ? version.changes.reverse_changes : version.changes)
+        chain.inject({}) do |changes, journal|
+          changes.append_changes!(backward ? journal.changes.reverse_changes : journal.changes)
         end
       end
 
       private
-        # Before a new version is created, the newly-changed attributes are appended onto a hash
+        # Before a new journal is created, the newly-changed attributes are appended onto a hash
         # of previously-changed attributes. Typically the previous changes will be empty, except in
-        # the case that a control block is used where versions are to be merged. See
+        # the case that a control block is used where journals are to be merged. See
         # VestalVersions::Control for more information.
-        def merge_version_changes
-          version_changes.append_changes!(incremental_version_changes)
+        def merge_journal_changes
+          journal_changes.append_changes!(incremental_journal_changes)
         end
 
-        # Stores the cumulative changes that are eventually used for version creation.
-        def version_changes
-          @version_changes ||= {}
+        # Stores the cumulative changes that are eventually used for journal creation.
+        def journal_changes
+          @journal_changes ||= {}
         end
 
-        # Stores the incremental changes that are appended to the cumulative changes before version
+        # Stores the incremental changes that are appended to the cumulative changes before journal
         # creation. Incremental changes are reset when the record is saved because they represent
         # a subset of the dirty attribute changes, which are reset upon save.
-        def incremental_version_changes
-          changes.slice(*versioned_columns)
+        def incremental_journal_changes
+          changes.slice(*journaled_columns)
         end
 
-        # Simply resets the cumulative changes after version creation.
-        def reset_version_changes
-          @version_changes = nil
+        # Simply resets the cumulative changes after journal creation.
+        def reset_journal_changes
+          @journal_changes = nil
         end
     end
 
@@ -147,7 +147,7 @@ module Redmine::Acts::Journalized
         replace(prepend_changes(changes))
       end
 
-      # Reverses the array values of a hash of changes. Useful for reversion both backward and
+      # Reverses the array values of a hash of changes. Useful for rejournal both backward and
       # forward through a record's history of changes.
       def reverse_changes
         inject({}){|nc,(a,c)| nc.merge!(a => c.reverse) }

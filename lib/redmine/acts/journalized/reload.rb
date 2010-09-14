@@ -36,24 +36,24 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 module Redmine::Acts::Journalized
-  # Ties into the existing ActiveRecord::Base#reload method to ensure that version information
+  # Ties into the existing ActiveRecord::Base#reload method to ensure that journal information
   # is properly reset.
   module Reload
     def self.included(base) # :nodoc:
       base.class_eval do
         include InstanceMethods
 
-        alias_method_chain :reload, :versions
+        alias_method_chain :reload, :journals
       end
     end
 
     # Adds instance methods into ActiveRecord::Base to tap into the +reload+ method.
     module InstanceMethods
-      # Overrides ActiveRecord::Base#reload, resetting the instance-variable-cached version number
+      # Overrides ActiveRecord::Base#reload, resetting the instance-variable-cached journal number
       # before performing the original +reload+ method.
-      def reload_with_versions(*args)
-        reset_version
-        reload_without_versions(*args)
+      def reload_with_journals(*args)
+        reset_journal
+        reload_without_journals(*args)
       end
     end
   end

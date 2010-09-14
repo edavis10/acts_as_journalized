@@ -1,4 +1,4 @@
-# This file is part of the acts_as_journalized plugin for the redMine 
+# This file is part of the acts_as_journalized plugin for the redMine
 # project management software
 #
 # Copyright (C) 2010  Finn GmbH, http://finn.de
@@ -22,7 +22,7 @@ module Redmine::Acts::Journalized
     def self.included(base)
       base.extend ClassMethods
     end
-    
+
     module ClassMethods
       # Shortcut to register a formatter for a number of fields
       def register_on_journal_formatter(formatter, *field_names)

@@ -9,17 +9,17 @@ class UsersTest < Test::Unit::TestCase
 
     should 'default to nil' do
       @user.update_attributes(:first_name => 'Stephen')
-      assert_nil @user.versions.last.user
+      assert_nil @user.journals.last.user
     end
 
     should 'accept and return an ActiveRecord user' do
       @user.update_attributes(:first_name => 'Stephen', :updated_by => @updated_by)
-      assert_equal @updated_by, @user.versions.last.user
+      assert_equal @updated_by, @user.journals.last.user
     end
 
     should 'accept and return a string user name' do
       @user.update_attributes(:first_name => 'Stephen', :updated_by => @updated_by.name)
-      assert_equal @updated_by.name, @user.versions.last.user
+      assert_equal @updated_by.name, @user.journals.last.user
     end
   end
 end

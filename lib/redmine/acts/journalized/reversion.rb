@@ -44,7 +44,7 @@ module Redmine::Acts::Journalized
       end
     end
 
-    # Provides the base instance methods required to revert a versioned instance.
+    # Provides the base instance methods required to revert a journaled instance.
     module InstanceMethods
       # Returns the current version number for the versioned object.
       def version
@@ -55,22 +55,22 @@ module Redmine::Acts::Journalized
         journals.last
       end
 
-      # Accepts a value corresponding to a specific version record, builds a history of changes
-      # between that version and the current version, and then iterates over that history updating
+      # Accepts a value corresponding to a specific journal record, builds a history of changes
+      # between that journal and the current journal, and then iterates over that history updating
       # the object's attributes until the it's reverted to its prior state.
       #
       # The single argument should adhere to one of the formats as documented in the +at+ method of
       # VestalVersions::Versions.
       #
-      # After the object is reverted to the target version, it is not saved. In order to save the
-      # object after the reversion, use the +revert_to!+ method.
+      # After the object is reverted to the target journal, it is not saved. In order to save the
+      # object after the rejournal, use the +revert_to!+ method.
       #
-      # The version number of the object will reflect whatever version has been reverted to, and
-      # the return value of the +revert_to+ method is also the target version number.
+      # The journal number of the object will reflect whatever journal has been reverted to, and
+      # the return value of the +revert_to+ method is also the target journal number.
       def revert_to(value)
-        to_number = journals.version_at(value)
+        to_number = journals.journal_at(value)
 
-        changes_between(version, to_number).each do |attribute, change|
+        changes_between(journal, to_number).each do |attribute, change|
           write_attribute(attribute, change.last)
         end
 
@@ -78,21 +78,21 @@ module Redmine::Acts::Journalized
       end
 
       # Behaves similarly to the +revert_to+ method except that it automatically saves the record
-      # after the reversion. The return value is the success of the save.
+      # after the rejournal. The return value is the success of the save.
       def revert_to!(value)
         revert_to(value)
         reset_version if saved = save
         saved
       end
 
-      # Returns a boolean specifying whether the object has been reverted to a previous version or
-      # if the object represents the latest version in the version history.
+      # Returns a boolean specifying whether the object has been reverted to a previous journal or
+      # if the object represents the latest journal in the journal history.
       def reverted?
         version != last_version
       end
 
       private
-        # Returns the number of the last created journal in the object's version history.
+        # Returns the number of the last created journal in the object's journal history.
         #
         # If no associated journals exist, the object is considered at version 0.
         def last_version

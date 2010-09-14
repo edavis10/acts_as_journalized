@@ -36,7 +36,7 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 module Redmine::Acts::Journalized
-  # Provides a way for information to be associated with specific versions as to who was
+  # Provides a way for information to be associated with specific journals as to who was
   # responsible for the associated update to the parent.
   module Users
     def self.included(base) # :nodoc:
@@ -46,18 +46,18 @@ module Redmine::Acts::Journalized
         include InstanceMethods
 
         attr_accessor :updated_by
-        alias_method_chain :version_attributes, :user
+        alias_method_chain :journal_attributes, :user
       end
     end
 
-    # Methods added to versioned ActiveRecord::Base instances to enable versioning with additional
+    # Methods added to journaled ActiveRecord::Base instances to enable journaling with additional
     # user information.
     module InstanceMethods
       private
-        # Overrides the +version_attributes+ method to include user information passed into the
+        # Overrides the +journal_attributes+ method to include user information passed into the
         # parent object, by way of a +updated_by+ attr_accessor.
-        def version_attributes_with_user
-          version_attributes_without_user.merge(:user => updated_by || User.current)
+        def journal_attributes_with_user
+          journal_attributes_without_user.merge(:user => updated_by || User.current)
         end
     end
 

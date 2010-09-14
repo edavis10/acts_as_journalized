@@ -9,11 +9,11 @@ class OptionsTest < Test::Unit::TestCase
       VestalVersions::Configuration.options.clear
       @configuration.each{|k,v| VestalVersions::Configuration.send("#{k}=", v) }
 
-      @prepared_options = User.prepare_versioned_options(@options.dup)
+      @prepared_options = User.prepare_journaled_options(@options.dup)
     end
 
     should 'have symbolized keys' do
-      assert User.vestal_versions_options.keys.all?{|k| k.is_a?(Symbol) }
+      assert User.vestal_journals_options.keys.all?{|k| k.is_a?(Symbol) }
     end
 
     should 'combine class-level and global configuration options' do
@@ -24,13 +24,13 @@ class OptionsTest < Test::Unit::TestCase
 
     teardown do
       VestalVersions::Configuration.options.clear
-      User.prepare_versioned_options({})
+      User.prepare_journaled_options({})
     end
   end
 
   context 'Given no options, configuration options' do
     setup do
-      @prepared_options = User.prepare_versioned_options({})
+      @prepared_options = User.prepare_journaled_options({})
     end
 
     should 'default to "VestalVersions::Version" for :class_name' do
@@ -41,8 +41,8 @@ class OptionsTest < Test::Unit::TestCase
       assert_equal :delete_all, @prepared_options[:dependent]
     end
 
-    should 'force the :as option value to :versioned' do
-      assert_equal :versioned, @prepared_options[:as]
+    should 'force the :as option value to :journaled' do
+      assert_equal :journaled, @prepared_options[:as]
     end
 
     should 'default to [VestalVersions::Versions] for :extend' do
