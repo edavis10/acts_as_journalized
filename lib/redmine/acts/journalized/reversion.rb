@@ -74,14 +74,14 @@ module Redmine::Acts::Journalized
           write_attribute(attribute, change.last)
         end
 
-        reset_version(to_number)
+        reset_journal(to_number)
       end
 
       # Behaves similarly to the +revert_to+ method except that it automatically saves the record
       # after the rejournal. The return value is the success of the save.
       def revert_to!(value)
         revert_to(value)
-        reset_version if saved = save
+        reset_journal if saved = save
         saved
       end
 
@@ -101,7 +101,7 @@ module Redmine::Acts::Journalized
 
         # Clears the cached version number instance variables so that they can be recalculated.
         # Useful after a new version is created.
-        def reset_version(version = nil)
+        def reset_journal(version = nil)
           @last_version = nil if version.nil?
           @version = version
         end

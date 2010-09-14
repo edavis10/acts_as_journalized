@@ -43,7 +43,7 @@ module JournalFormatter
       :named_association => (Proc.new do |value, journaled, field|
         association = journaled.class.reflect_on_association(field.to_sym)
         if association
-          record = association.class_name.constantize.find_by_id(id)
+          record = association.class_name.constantize.find_by_id(value)
           record.name if record
         end
       end),

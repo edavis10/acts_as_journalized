@@ -32,6 +32,12 @@ module JournalDeprecated
     journaled
   end
 
+  # Old naming
+  def journalized= obj
+    journaled = obj
+  end
+
+
   # Shortcut from more issue-specific journals
   def attachments
     journalized.respond_to?(:attachments) ? journalized.attachments : nil
