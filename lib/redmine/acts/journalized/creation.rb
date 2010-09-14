@@ -36,7 +36,7 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 module Redmine::Acts::Journalized
-  # Adds the functionality necessary to control version creation on a versioned instance of
+  # Adds the functionality necessary to control journal creation on a journaled instance of
   # ActiveRecord::Base.
   module Creation
     def self.included(base) # :nodoc:
@@ -44,72 +44,72 @@ module Redmine::Acts::Journalized
         extend ClassMethods
         include InstanceMethods
 
-        after_save :create_version, :if => :create_version?
-        after_update :update_version, :if => :update_version?
+        after_save :create_journal, :if => :create_journal?
+        after_update :update_journal, :if => :update_journal?
 
         class << self
-          alias_method_chain :prepare_versioned_options, :creation
+          alias_method_chain :prepare_journaled_options, :creation
         end
       end
     end
 
-    # Class methods added to ActiveRecord::Base to facilitate the creation of new versions.
+    # Class methods added to ActiveRecord::Base to facilitate the creation of new journals.
     module ClassMethods
-      # Overrides the basal +prepare_versioned_options+ method defined in VestalVersions::Options
-      # to extract the <tt>:only</tt> and <tt>:except</tt> options into +vestal_versions_options+.
-      def prepare_versioned_options_with_creation(options)
-        result = prepare_versioned_options_without_creation(options)
+      # Overrides the basal +prepare_journaled_options+ method defined in VestalVersions::Options
+      # to extract the <tt>:only</tt> and <tt>:except</tt> options into +vestal_journals_options+.
+      def prepare_journaled_options_with_creation(options)
+        result = prepare_journaled_options_without_creation(options)
 
-        self.vestal_versions_options[:only] = Array(options.delete(:only)).map(&:to_s).uniq if options[:only]
-        self.vestal_versions_options[:except] = Array(options.delete(:except)).map(&:to_s).uniq if options[:except]
+        self.vestal_journals_options[:only] = Array(options.delete(:only)).map(&:to_s).uniq if options[:only]
+        self.vestal_journals_options[:except] = Array(options.delete(:except)).map(&:to_s).uniq if options[:except]
 
         result
       end
     end
 
-    # Instance methods that determine whether to save a version and actually perform the save.
+    # Instance methods that determine whether to save a journal and actually perform the save.
     module InstanceMethods
       private
-        # Returns whether a new version should be created upon updating the parent record.
-        # A new version will be created if attributes have changed or no previous version
+        # Returns whether a new journal should be created upon updating the parent record.
+        # A new journal will be created if attributes have changed or no previous journal
         # exists
-        def create_version?
-          !version_changes.blank? || journals.empty?
+        def create_journal?
+          !journal_changes.blank? || journals.empty?
         end
 
-        # Creates a new version upon updating the parent record.
-        def create_version
-          journals << self.class.journal_class.create(version_attributes)
-          reset_version_changes
-          reset_version
+        # Creates a new journal upon updating the parent record.
+        def create_journal
+          journals << self.class.journal_class.create(journal_attributes)
+          reset_journal_changes
+          reset_journal
         end
 
-        # Returns whether the last version should be updated upon updating the parent record.
+        # Returns whether the last journal should be updated upon updating the parent record.
         # This method is overridden in VestalVersions::Control to account for a control block that
-        # merges changes onto the previous version.
-        def update_version?
+        # merges changes onto the previous journal.
+        def update_journal?
           false
         end
 
-        # Updates the last version's changes by appending the current version changes.
-        def update_version
-          return create_version unless v = journals.last
+        # Updates the last journal's changes by appending the current journal changes.
+        def update_journal
+          return create_journal unless v = journals.last
           v.changes_will_change!
-          v.update_attribute(:changes, v.changes.append_changes(version_changes))
-          reset_version_changes
-          reset_version
+          v.update_attribute(:changes, v.changes.append_changes(journal_changes))
+          reset_journal_changes
+          reset_journal
         end
 
         # Returns an array of column names that should be included in the changes of created
-        # versions. If <tt>vestal_versions_options[:only]</tt> is specified, only those columns
-        # will be versioned. Otherwise, if <tt>vestal_versions_options[:except]</tt> is specified,
-        # all columns will be versioned other than those specified. Without either option, the
-        # default is to version all columns. At any rate, the four "automagic" timestamp columns
-        # maintained by Rails are never versioned.
-        def versioned_columns
+        # journals. If <tt>vestal_journals_options[:only]</tt> is specified, only those columns
+        # will be journaled. Otherwise, if <tt>vestal_journals_options[:except]</tt> is specified,
+        # all columns will be journaled other than those specified. Without either option, the
+        # default is to journal all columns. At any rate, the four "automagic" timestamp columns
+        # maintained by Rails are never journaled.
+        def journaled_columns
           case
-            when vestal_versions_options[:only] then self.class.column_names & vestal_versions_options[:only]
-            when vestal_versions_options[:except] then self.class.column_names - vestal_versions_options[:except]
+          when vestal_journals_options[:only] then self.class.column_names & vestal_journals_options[:only]
+            when vestal_journals_options[:except] then self.class.column_names - vestal_journals_options[:except]
             else self.class.column_names
           end - %w(created_at updated_at)
         end
@@ -120,10 +120,10 @@ module Redmine::Acts::Journalized
           self.class.name.underscore.pluralize
         end
 
-        # Specifies the attributes used during version creation. This is separated into its own
+        # Specifies the attributes used during journal creation. This is separated into its own
         # method so that it can be overridden by the VestalVersions::Users feature.
-        def version_attributes
-          {:versioned_id => self.id, :activity_type => activity_type, :changes => version_changes, :version => last_version + 1}
+        def journal_attributes
+          {:journaled_id => self.id, :activity_type => activity_type, :changes => journal_changes, :version => last_version + 1}
         end
     end
   end

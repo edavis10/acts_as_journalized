@@ -10,10 +10,10 @@ class ReloadTest < Test::Unit::TestCase
       @user.revert_to(first_version)
     end
 
-    should 'reset the version number to the most recent version' do
-      assert_not_equal @last_version, @user.version
+    should 'reset the journal number to the most recent journal' do
+      assert_not_equal @last_journal, @user.journal
       @user.reload
-      assert_equal @last_version, @user.version
+      assert_equal @last_journal, @user.journal
     end
   end
 end

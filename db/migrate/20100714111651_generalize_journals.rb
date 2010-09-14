@@ -6,7 +6,7 @@ class GeneralizeJournals < ActiveRecord::Migration
     end
 
     change_table :journals do |t|
-      t.rename :journalized_id, :versioned_id
+      t.rename :journalized_id, :journaled_id
       t.rename :created_on, :created_at
 
       t.integer :version, :default => 0, :null => false
@@ -17,13 +17,13 @@ class GeneralizeJournals < ActiveRecord::Migration
       t.remove_index "created_on"
       t.remove_index "journalized_id"
 
-      t.index :versioned_id
+      t.index :journaled_id
       t.index :activity_type
       t.index :created_at
       t.index :type
     end
 
-    Journal.all.group_by(&:versioned_id).each_pair do |id, journals|
+    Journal.all.group_by(&:journaled_id).each_pair do |id, journals|
       journals.sort_by(:created_at).each_with_index do |j, idx|
         j.update_attribute(:type, "#{j.journalized_type}Journal")
         j.update_attribute(:version, idx + 1)
@@ -43,6 +43,25 @@ class GeneralizeJournals < ActiveRecord::Migration
       journal.update_attribute(:changes, changes.to_yaml)
     end
 
+    # Create creation journals for all activity providers
+    providers = Redmine::Activity.providers.collect {|k, v| v.collect(&:constantize) }.flatten.compact.uniq
+    providers.each do |p|
+      p.find(:all).each do |o|
+        unless o.last_journal
+          o.send(:update_journal)
+          created_at = nil
+          [:created_at, :created_on, :updated_at, :updated_on].each do |m|
+            if o.respond_to? m
+              created_at = o.send(m)
+              break
+            end
+          end
+          p "Updateing #{o}"
+          o.last_journal.update_attribute(:created_at, created_at) if created_at
+        end
+      end
+    end
+
     drop_table :journal_details
   end
 
@@ -56,7 +75,7 @@ class GeneralizeJournals < ActiveRecord::Migration
     end
 
     change_table "journals", :force => true do |t|
-      t.rename :versioned_id, :journalized_id
+      t.rename :journaled_id, :journalized_id
       t.rename :created_at, :created_on
 
       t.string :journalized_type, :limit => 30, :default => "", :null => false
@@ -79,7 +98,7 @@ class GeneralizeJournals < ActiveRecord::Migration
     end
 
     change_table "journals", :force => true do |t|
-      t.remove_index :versioned_id
+      t.remove_index :journaled_id
       t.remove_index :activity_type
       t.remove_index :created_at
       t.remove_index :type

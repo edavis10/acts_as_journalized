@@ -1,12 +1,12 @@
-# This file is part of the acts_as_journalized plugin for the redMine 
+# This file is part of the acts_as_journalized plugin for the redMine
 # project management software
 #
 # Copyright (C) 2010  Finn GmbH, http://finn.de
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
-# as published by the Free Software Foundation; either version 2
-# of the License, or (at your option) any later version.
+# as published by the Free Software Foundation; either journal 2
+# of the License, or (at your option) any later journal.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -22,22 +22,28 @@
 # of a specific journal.
 module JournalDeprecated
   unloadable
-  # Old timestamps. created_at is what t.timestamps creates in recent Rails versions
+  # Old timestamps. created_at is what t.timestamps creates in recent Rails journals
   def created_on
     created_at
   end
-  
+
   # Old naming
   def journalized
-    versioned
+    journaled
   end
-  
+
+  # Old naming
+  def journalized= obj
+    journaled = obj
+  end
+
+
   # Shortcut from more issue-specific journals
   def attachments
     journalized.respond_to?(:attachments) ? journalized.attachments : nil
   end
-  
+
   deprecate :created_on => "use #created_at"
-  deprecate :journalized => "use versioned"
+  deprecate :journalized => "use journaled"
   deprecate :attachments => "implement it yourself"
 end

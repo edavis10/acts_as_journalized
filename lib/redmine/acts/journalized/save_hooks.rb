@@ -30,7 +30,7 @@ module Redmine::Acts::Journalized
       end
     end
 
-    # Saves the current custom values, notes and journal to include them in the next version
+    # Saves the current custom values, notes and journal to include them in the next journal
     # Called before save
     def init_journal(user = User.current, notes = "")
       @notes ||= notes
@@ -49,7 +49,12 @@ module Redmine::Acts::Journalized
     def update_journal
       unless last_journal == @current_journal
         # A new journal was created: make sure the user is set properly
+        # FIXME: This is ugly
         last_journal.update_attribute(:user_id, @journal_user.id)
+        unless last_journal.user_id == @journal_user.id
+          last_journal.reload
+          last_journal.update_attribute(:user_id, @journal_user.id)
+        end
       end
 
       if @custom_values_before_save
@@ -57,7 +62,7 @@ module Redmine::Acts::Journalized
         changed_custom_values = current_custom_values - @custom_values_before_save
       end
 
-      if (changed_custom_values && !changed_custom_values.empty?) || !@notes.empty?
+      if !changed_custom_values.try(:empty?) or !@notes.try(:empty?)
         update_extended_journal_contents(changed_custom_values)
       end
       @current_journal = @journal_user = @notes = nil
@@ -69,7 +74,7 @@ module Redmine::Acts::Journalized
       if last_journal == @current_journal
         # No attribute changes, create a new journal entry
         # on which notes and changed custom values will be written
-        create_version
+        create_journal
         last_journal.update_attribute(:user_id, @journal_user.id)
       end
       last_journal.update_attribute(:notes, @notes) unless @notes.empty?

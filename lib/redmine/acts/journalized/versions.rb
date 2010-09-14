@@ -36,17 +36,17 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 module Redmine::Acts::Journalized
-  # An extension module for the +has_many+ association with versions.
+  # An extension module for the +has_many+ association with journals.
   module Versions
-    # Returns all versions between (and including) the two given arguments. See documentation for
+    # Returns all journals between (and including) the two given arguments. See documentation for
     # the +at+ extension method for what arguments are valid. If either of the given arguments is
     # invalid, an empty array is returned.
     #
-    # The +between+ method preserves returns an array of version records, preserving the order
-    # given by the arguments. If the +from+ value represents a version before that of the +to+
+    # The +between+ method preserves returns an array of journal records, preserving the order
+    # given by the arguments. If the +from+ value represents a journal before that of the +to+
     # value, the array will be ordered from earliest to latest. The reverse is also true.
     def between(from, to)
-      from_number, to_number = version_at(from), version_at(to)
+      from_number, to_number = journal_at(from), journal_at(to)
       return [] if from_number.nil? || to_number.nil?
 
       condition = (from_number == to_number) ? to_number : Range.new(*[from_number, to_number].sort)
@@ -56,33 +56,33 @@ module Redmine::Acts::Journalized
       )
     end
 
-    # Returns all version records created before the version associated with the given value.
+    # Returns all journal records created before the journal associated with the given value.
     def before(value)
-      return [] if (version = version_at(value)).nil?
+      return [] if (version = journal_at(value)).nil?
       all(:conditions => "#{aliased_table_name}.version < #{version}")
     end
 
-    # Returns all version records created after the version associated with the given value.
+    # Returns all journal records created after the journal associated with the given value.
     #
     # This is useful for dissociating records during use of the +reset_to!+ method.
     def after(value)
-      return [] if (version = version_at(value)).nil?
+      return [] if (version = journal_at(value)).nil?
       all(:conditions => "#{aliased_table_name}.version > #{version}")
     end
 
-    # Returns a single version associated with the given value. The following formats are valid:
-    # * A Date or Time object: When given, +to_time+ is called on the value and the last version
+    # Returns a single journal associated with the given value. The following formats are valid:
+    # * A Date or Time object: When given, +to_time+ is called on the value and the last journal
     #   record in the history created before (or at) that time is returned.
-    # * A Numeric object: Typically a positive integer, these values correspond to version numbers
-    #   and the associated version record is found by a version number equal to the given value
+    # * A Numeric object: Typically a positive integer, these values correspond to journal numbers
+    #   and the associated journal record is found by a journal number equal to the given value
     #   rounded down to the nearest integer.
-    # * A String: A string value represents a version tag and the associated version is searched
+    # * A String: A string value represents a journal tag and the associated journal is searched
     #   for by a matching tag value. *Note:* Be careful with string representations of numbers.
-    # * A Symbol: Symbols represent association class methods on the +has_many+ versions
+    # * A Symbol: Symbols represent association class methods on the +has_many+ journals
     #   association. While all of the built-in association methods require arguments, additional
-    #   extension modules can be defined using the <tt>:extend</tt> option on the +versioned+
-    #   method. See the +versioned+ documentation for more information.
-    # * A Version object: If a version object is passed to the +at+ method, it is simply returned
+    #   extension modules can be defined using the <tt>:extend</tt> option on the +journaled+
+    #   method. See the +journaled+ documentation for more information.
+    # * A Version object: If a journal object is passed to the +at+ method, it is simply returned
     #   untouched.
     def at(value)
       case value
@@ -93,12 +93,12 @@ module Redmine::Acts::Journalized
       end
     end
 
-    # Returns the version number associated with the given value. In many cases, this involves
-    # simply passing the value to the +at+ method and then returning the subsequent version number.
-    # Hoever, for Numeric values, the version number can be returned directly and for Date/Time
-    # values, a default value of 1 is given to ensure that times prior to the first version
-    # still return a valid version number (useful for reversion).
-    def version_at(value)
+    # Returns the journal number associated with the given value. In many cases, this involves
+    # simply passing the value to the +at+ method and then returning the subsequent journal number.
+    # Hoever, for Numeric values, the journal number can be returned directly and for Date/Time
+    # values, a default value of 1 is given to ensure that times prior to the first journal
+    # still return a valid journal number (useful for rejournal).
+    def journal_at(value)
       case value
         when Date, Time then (v = at(value)) ? v.version : 1
         when Numeric then value.floor

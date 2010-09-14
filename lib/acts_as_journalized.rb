@@ -5,8 +5,8 @@
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
-# as published by the Free Software Foundation; either version 2
-# of the License, or (at your option) any later version.
+# as published by the Free Software Foundation; either journal 2
+# of the License, or (at your option) any later journal.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -47,16 +47,16 @@ module Redmine
           end
         end
 
-        # This call will add an activity and, if neccessary, start the versioning and
+        # This call will add an activity and, if neccessary, start the journaling and
         # add an event callback on the model.
         # Versioning and acting as an Event may only be applied once.
         # To apply more than on activity, use acts_as_activity
         def acts_as_journalized(options = {}, &block)
-          activity_hash, event_hash, version_hash = split_option_hashes(options)
+          activity_hash, event_hash, journal_hash = split_option_hashes(options)
 
           acts_as_activity(activity_hash)
 
-          return if versioned?
+          return if journaled?
 
           include Options
           include Changes
@@ -76,11 +76,20 @@ module Redmine
 
           journal_class.acts_as_event journalized_event_hash(event_hash)
 
-          (version_hash[:except] ||= []) << self.primary_key << inheritance_column <<
+          # FIXME: When the new API is settled, remove me
+          Redmine::Acts::Event::InstanceMethods.instance_methods(false).each do |m|
+            class_eval(<<-RUBY, __FILE__, __LINE__)
+              def #{m}
+                last_journal.#{m}
+              end
+            RUBY
+          end
+
+          (journal_hash[:except] ||= []) << self.primary_key << inheritance_column <<
             :updated_on << :updated_at << :lock_version
-          prepare_versioned_options(version_hash)
-          has_many :journals, version_hash.merge({:class_name => journal_class.name,
-            :foreign_key => "versioned_id"}), &block
+          prepare_journaled_options(journal_hash)
+          has_many :journals, journal_hash.merge({:class_name => journal_class.name,
+            :foreign_key => "journaled_id"}), &block
         end
 
         def journal_class
@@ -90,7 +99,7 @@ module Redmine
           else
             Object.const_set(journal_class_name, Class.new(Journal)).tap do |c|
               # Run after the inherited hook to associate with the parent record.
-              c.class_eval("belongs_to :versioned, :class_name => '#{name}'")
+              c.class_eval("belongs_to :journaled, :class_name => '#{name}'")
             end
           end
         end
@@ -101,7 +110,7 @@ module Redmine
           def split_option_hashes(options)
             activity_hash = {}
             event_hash = {}
-            version_hash = {}
+            journal_hash = {}
 
             options.each_pair do |k, v|
               case
@@ -110,10 +119,10 @@ module Redmine
               when k.to_s =~ /^event_(.+)$/
                 event_hash[$1.to_sym] = v
               else
-                version_hash[k.to_sym] = v
+                journal_hash[k.to_sym] = v
               end
             end
-            [activity_hash, event_hash, version_hash]
+            [activity_hash, event_hash, journal_hash]
           end
 
           # Merges the passed activity_hash with the options we require for
@@ -150,7 +159,7 @@ module Redmine
                   end
                 end
                 include_opts.uniq!
-                opts[:include] = [:versioned => include_opts]
+                opts[:include] = [:journaled => include_opts]
 
                 #opts[:joins] = h[:find_options][:joins] if h[:find_options][:joins]
               end
@@ -164,7 +173,7 @@ module Redmine
               options[:url] = Proc.new do |journal|
                 { :controller => plural_name,
                   :action => 'show',
-                  :id => journal.versioned.id,
+                  :id => journal.journaled.id,
                   :anchor => "note-#{journal.version}" }
               end
             end

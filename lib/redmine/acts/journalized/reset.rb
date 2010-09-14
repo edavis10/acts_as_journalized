@@ -36,7 +36,7 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 module Redmine::Acts::Journalized
-  # Adds the ability to "reset" (or hard revert) a versioned ActiveRecord::Base instance.
+  # Adds the ability to "reset" (or hard revert) a journaled ActiveRecord::Base instance.
   module Reset
     def self.included(base) # :nodoc:
       base.class_eval do
@@ -44,19 +44,19 @@ module Redmine::Acts::Journalized
       end
     end
 
-    # Adds the instance methods required to reset an object to a previous version.
+    # Adds the instance methods required to reset an object to a previous journal.
     module InstanceMethods
-      # Similar to +revert_to!+, the +reset_to!+ method reverts an object to a previous version,
-      # only instead of creating a new record in the version history, +reset_to!+ deletes all of
-      # the version history that occurs after the version reverted to.
+      # Similar to +revert_to!+, the +reset_to!+ method reverts an object to a previous journal,
+      # only instead of creating a new record in the journal history, +reset_to!+ deletes all of
+      # the journal history that occurs after the journal reverted to.
       #
-      # The action taken on each version record after the point of reversion is determined by the
-      # <tt>:dependent</tt> option given to the +versioned+ method. See the +versioned+ method
+      # The action taken on each journal record after the point of rejournal is determined by the
+      # <tt>:dependent</tt> option given to the +journaled+ method. See the +journaled+ method
       # documentation for more details.
       def reset_to!(value)
-        if saved = skip_version{ revert_to!(value) }
+        if saved = skip_journal{ revert_to!(value) }
           journals.send(:delete_records, journals.after(value))
-          reset_version
+          reset_journal
         end
         saved
       end

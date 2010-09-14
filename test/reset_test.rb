@@ -3,51 +3,51 @@ require File.join(File.dirname(__FILE__), 'test_helper')
 class ResetTest < Test::Unit::TestCase
   context 'Resetting a model' do
     setup do
-      @original_dependent = User.reflect_on_association(:versions).options[:dependent]
-      @user, @versions = User.new, []
+      @original_dependent = User.reflect_on_association(:journals).options[:dependent]
+      @user, @journals = User.new, []
       @names = ['Steve Richert', 'Stephen Richert', 'Stephen Jobs', 'Steve Jobs']
       @names.each do |name|
         @user.update_attribute(:name, name)
-        @versions << @user.version
+        @journals << @user.journal
       end
     end
 
     should "properly revert the model's attributes" do
-      @versions.reverse.each_with_index do |version, i|
-        @user.reset_to!(version)
+      @journals.reverse.each_with_index do |journal, i|
+        @user.reset_to!(journal)
         assert_equal @names.reverse[i], @user.name
       end
     end
 
-    should 'dissociate all versions after the target' do
-      @versions.reverse.each do |version|
-        @user.reset_to!(version)
-        assert_equal 0, @user.versions(true).after(version).count
+    should 'dissociate all journals after the target' do
+      @journals.reverse.each do |journal|
+        @user.reset_to!(journal)
+        assert_equal 0, @user.journals(true).after(journal).count
       end
     end
 
     context 'with the :dependent option as :delete_all' do
       setup do
-        User.reflect_on_association(:versions).options[:dependent] = :delete_all
+        User.reflect_on_association(:journals).options[:dependent] = :delete_all
       end
 
-      should 'delete all versions after the target version' do
-        @versions.reverse.each do |version|
-          later_versions = @user.versions.after(version)
-          @user.reset_to!(version)
-          later_versions.each do |later_version|
+      should 'delete all journals after the target journal' do
+        @journals.reverse.each do |journal|
+          later_journals = @user.journals.after(journal)
+          @user.reset_to!(journal)
+          later_journals.each do |later_journal|
             assert_raise ActiveRecord::RecordNotFound do
-              later_version.reload
+              later_journal.reload
             end
           end
         end
       end
 
-      should 'not destroy all versions after the target version' do
+      should 'not destroy all journals after the target journal' do
         VestalVersions::Version.any_instance.stubs(:destroy).raises(RuntimeError)
-        @versions.reverse.each do |version|
+        @journals.reverse.each do |journal|
           assert_nothing_raised do
-            @user.reset_to!(version)
+            @user.reset_to!(journal)
           end
         end
       end
@@ -55,32 +55,32 @@ class ResetTest < Test::Unit::TestCase
 
     context 'with the :dependent option as :destroy' do
       setup do
-        User.reflect_on_association(:versions).options[:dependent] = :destroy
+        User.reflect_on_association(:journals).options[:dependent] = :destroy
       end
 
-      should 'delete all versions after the target version' do
-        @versions.reverse.each do |version|
-          later_versions = @user.versions.after(version)
-          @user.reset_to!(version)
-          later_versions.each do |later_version|
+      should 'delete all journals after the target journal' do
+        @journals.reverse.each do |journal|
+          later_journals = @user.journals.after(journal)
+          @user.reset_to!(journal)
+          later_journals.each do |later_journal|
             assert_raise ActiveRecord::RecordNotFound do
-              later_version.reload
+              later_journal.reload
             end
           end
         end
       end
 
-      should 'destroy all versions after the target version' do
+      should 'destroy all journals after the target journal' do
         VestalVersions::Version.any_instance.stubs(:destroy).raises(RuntimeError)
-        @versions.reverse.each do |version|
-          later_versions = @user.versions.after(version)
-          if later_versions.empty?
+        @journals.reverse.each do |journal|
+          later_journals = @user.journals.after(journal)
+          if later_journals.empty?
             assert_nothing_raised do
-              @user.reset_to!(version)
+              @user.reset_to!(journal)
             end
           else
             assert_raise RuntimeError do
-              @user.reset_to!(version)
+              @user.reset_to!(journal)
             end
           end
         end
@@ -89,16 +89,16 @@ class ResetTest < Test::Unit::TestCase
 
     context 'with the :dependent option as :nullify' do
       setup do
-        User.reflect_on_association(:versions).options[:dependent] = :nullify
+        User.reflect_on_association(:journals).options[:dependent] = :nullify
       end
 
-      should 'leave all versions after the target version' do
-        @versions.reverse.each do |version|
-          later_versions = @user.versions.after(version)
-          @user.reset_to!(version)
-          later_versions.each do |later_version|
+      should 'leave all journals after the target journal' do
+        @journals.reverse.each do |journal|
+          later_journals = @user.journals.after(journal)
+          @user.reset_to!(journal)
+          later_journals.each do |later_journal|
             assert_nothing_raised do
-              later_version.reload
+              later_journal.reload
             end
           end
         end
@@ -106,7 +106,7 @@ class ResetTest < Test::Unit::TestCase
     end
 
     teardown do
-      User.reflect_on_association(:versions).options[:dependent] = @original_dependent
+      User.reflect_on_association(:journals).options[:dependent] = @original_dependent
     end
   end
 end

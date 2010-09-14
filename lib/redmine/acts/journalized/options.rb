@@ -36,7 +36,7 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 module Redmine::Acts::Journalized
-  # Provides +versioned+ options conversion and cleanup.
+  # Provides +journaled+ options conjournal and cleanup.
   module Options
     def self.included(base) # :nodoc:
       base.class_eval do
@@ -44,21 +44,21 @@ module Redmine::Acts::Journalized
       end
     end
 
-    # Class methods that provide preparation of options passed to the +versioned+ method.
+    # Class methods that provide preparation of options passed to the +journaled+ method.
     module ClassMethods
-      # The +prepare_versioned_options+ method has three purposes:
+      # The +prepare_journaled_options+ method has three purposes:
       # 1. Populate the provided options with default values where needed
       # 2. Prepare options for use with the +has_many+ association
       # 3. Save user-configurable options in a class-level variable
       #
       # Options are given priority in the following order:
-      # 1. Those passed directly to the +versioned+ method
+      # 1. Those passed directly to the +journaled+ method
       # 2. Those specified in an initializer +configure+ block
-      # 3. Default values specified in +prepare_versioned_options+
+      # 3. Default values specified in +prepare_journaled_options+
       #
       # The method is overridden in feature modules that require specific options outside the
       # standard +has_many+ associations.
-      def prepare_versioned_options(options)
+      def prepare_journaled_options(options)
         options.symbolize_keys!
         options.reverse_merge!(Configuration.options)
         options.reverse_merge!(
@@ -69,8 +69,8 @@ module Redmine::Acts::Journalized
           :order => "#{options[:class_name].constantize.table_name}.version ASC"
         )
 
-        class_inheritable_accessor :vestal_versions_options
-        self.vestal_versions_options = options.dup
+        class_inheritable_accessor :vestal_journals_options
+        self.vestal_journals_options = options.dup
 
         options.merge!(
           :extend => Array(options[:extend]).unshift(Versions)

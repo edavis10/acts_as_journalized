@@ -29,17 +29,11 @@ module Redmine::Acts::Journalized
       notified.collect(&:mail)
     end
 
-    # For compatibility with the removed WikiContent::Version
-    def versions
-      journals
-    end
-
     def current_journal
       last_journal
     end
 
     deprecate :recipients => "use #last_journal.recipients"
-    deprecate :versions => "use #journals"
     deprecate :current_journal => "use #last_journal"
   end
 end

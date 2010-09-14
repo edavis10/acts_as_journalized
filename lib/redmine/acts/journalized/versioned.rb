@@ -36,7 +36,7 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 module Redmine::Acts::Journalized
-  # Simply adds a flag to determine whether a model class if versioned.
+  # Simply adds a flag to determine whether a model class if journaled.
   module Versioned
     def self.extended(base) # :nodoc:
       base.class_eval do
@@ -46,21 +46,21 @@ module Redmine::Acts::Journalized
       end
     end
 
-    # Overrides the +versioned+ method to first define the +versioned?+ class method before
-    # deferring to the original +versioned+.
+    # Overrides the +journaled+ method to first define the +journaled?+ class method before
+    # deferring to the original +journaled+.
     def acts_as_journalized_with_flag(*args)
       acts_as_journalized_without_flag(*args)
 
       class << self
-        def versioned?
+        def journaled?
           true
         end
       end
     end
 
-    # For all ActiveRecord::Base models that do not call the +versioned+ method, the +versioned?+
+    # For all ActiveRecord::Base models that do not call the +journaled+ method, the +journaled?+
     # method will return false.
-    def versioned?
+    def journaled?
       false
     end
   end

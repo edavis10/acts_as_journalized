@@ -36,7 +36,7 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 module Redmine::Acts::Journalized
-  # Allows for easy application-wide configuration of options passed into the +versioned+ method.
+  # Allows for easy application-wide configuration of options passed into the +journaled+ method.
   module Configuration
     # The VestalVersions module is extended by VestalVersions::Configuration, allowing the
     # +configure method+ to be used as follows in a Rails initializer:
@@ -47,10 +47,10 @@ module Redmine::Acts::Journalized
     #   end
     #
     # Each variable assignment in the +configure+ block corresponds directly with the options
-    # available to the +versioned+ method. Assigning common options in an initializer can keep your
+    # available to the +journaled+ method. Assigning common options in an initializer can keep your
     # models tidy.
     #
-    # If an option is given in both an initializer and in the options passed to +versioned+, the
+    # If an option is given in both an initializer and in the options passed to +journaled+, the
     # value given in the model itself will take precedence.
     def configure
       yield Configuration
