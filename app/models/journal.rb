@@ -67,7 +67,7 @@ class Journal < ActiveRecord::Base
   end
 
   def details
-    attributes["changes"]
+    attributes["changes"] || {}
   end
 
   alias_method :changes, :details
