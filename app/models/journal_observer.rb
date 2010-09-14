@@ -19,7 +19,8 @@
 
 class JournalObserver < ActiveRecord::Observer
   def after_create(journal)
-    if journal.journaled.is_a? Issue
+    # Deliver emails for non-creation issue journals
+    if journal.journaled.is_a? Issue and journal.version > 1
       Mailer.deliver_issue_edit(journal) if Setting.notified_events.include?('issue_updated')
     end
   end
