@@ -76,15 +76,6 @@ module Redmine
 
           journal_class.acts_as_event journalized_event_hash(event_hash)
 
-          # FIXME: When the new API is settled, remove me
-          Redmine::Acts::Event::InstanceMethods.instance_methods(false).each do |m|
-            class_eval(<<-RUBY, __FILE__, __LINE__)
-              def #{m}
-                last_journal.#{m}
-              end
-            RUBY
-          end
-
           (journal_hash[:except] ||= []) << self.primary_key << inheritance_column <<
             :updated_on << :updated_at << :lock_version
           prepare_journaled_options(journal_hash)

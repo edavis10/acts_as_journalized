@@ -33,6 +33,21 @@ module Redmine::Acts::Journalized
       last_journal
     end
 
+    # FIXME: When the new API is settled, remove me
+    Redmine::Acts::Event::InstanceMethods.instance_methods(false).each do |m|
+      if m.start_with? "event_"
+        class_eval(<<-RUBY, __FILE__, __LINE__)
+          def #{m}
+            if last_journal.nil?
+              create_journal
+            end
+            return last_journal.#{m}
+          end
+        RUBY
+      end
+    end
+
+
     deprecate :recipients => "use #last_journal.recipients"
     deprecate :current_journal => "use #last_journal"
   end
