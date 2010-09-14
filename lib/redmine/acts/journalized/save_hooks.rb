@@ -41,15 +41,15 @@ module Redmine::Acts::Journalized
           hash
         end
       end
-      @current_journal = current_journal
+      @current_journal = last_journal
     end
 
     # Saves the notes and custom value changes in the last Journal
     # Called after_save
     def update_journal
-      unless current_journal == @current_journal
+      unless last_journal == @current_journal
         # A new journal was created: make sure the user is set properly
-        current_journal.update_attribute(:user_id, @journal_user.id)
+        last_journal.update_attribute(:user_id, @journal_user.id)
       end
 
       if @custom_values_before_save
@@ -66,16 +66,16 @@ module Redmine::Acts::Journalized
     # Saves the notes and changed custom values to the journal
     # Creates a new journal, if no immediate attributes were changed
     def update_extended_journal_contents(changed_custom_values)
-      if current_journal == @current_journal
+      if last_journal == @current_journal
         # No attribute changes, create a new journal entry
         # on which notes and changed custom values will be written
         create_version
+        last_journal.update_attribute(:user_id, @journal_user.id)
       end
-      current_journal.update_attribute(:user_id, @journal_user.id)
-      current_journal.update_attribute(:notes, @notes)
+      last_journal.update_attribute(:notes, @notes) unless @notes.empty?
       if changed_custom_values
-        combined_changes = current_journal.changes.merge(changed_custom_values)
-        current_journal.update_attribute(:changes, combined_changes.to_yaml)
+        combined_changes = last_journal.changes.merge(changed_custom_values)
+        last_journal.update_attribute(:changes, combined_changes.to_yaml)
       end
     end
 
