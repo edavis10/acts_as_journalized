@@ -14,9 +14,6 @@ class GeneralizeJournals < ActiveRecord::Migration
       t.text :changes
       t.string :type
 
-      t.remove_index "created_on"
-      t.remove_index "journalized_id"
-
       t.index :journaled_id
       t.index :activity_type
       t.index :created_at
@@ -62,17 +59,17 @@ class GeneralizeJournals < ActiveRecord::Migration
       end
     end
 
-    drop_table :journal_details
+    # drop_table :journal_details
   end
 
   def self.down
-    create_table "journal_details", :force => true do |t|
-      t.integer "journal_id",               :default => 0,  :null => false
-      t.string  "property",   :limit => 30, :default => "", :null => false
-      t.string  "prop_key",   :limit => 30, :default => "", :null => false
-      t.string  "old_value"
-      t.string  "value"
-    end
+    # create_table "journal_details", :force => true do |t|
+    #   t.integer "journal_id",               :default => 0,  :null => false
+    #   t.string  "property",   :limit => 30, :default => "", :null => false
+    #   t.string  "prop_key",   :limit => 30, :default => "", :null => false
+    #   t.string  "old_value"
+    #   t.string  "value"
+    # end
 
     change_table "journals", :force => true do |t|
       t.rename :journaled_id, :journalized_id
@@ -84,17 +81,17 @@ class GeneralizeJournals < ActiveRecord::Migration
     custom_field_names = CustomField.all.group_by(&:type)[IssueCustomField].collect(&:name)
     Journal.all.each do |j|
       j.update_attribute(:journalized_type, j.journalized.class.name)
-      j.changes.each_pair do |prop_key, values|
-        if Issue.columns.collect(&:name).include? prop_key.to_s
-          property = :attr
-        elsif CustomField.find_by_id(prop_key.to_s)
-          property = :cf
-        else
-          property = :attachment
-        end
-        JournalDetail.create(:journal_id => j.id, :property => property,
-          :prop_key => prop_key, :old_value => values.first, :value => values.last)
-      end
+    #   j.changes.each_pair do |prop_key, values|
+    #     if Issue.columns.collect(&:name).include? prop_key.to_s
+    #       property = :attr
+    #     elsif CustomField.find_by_id(prop_key.to_s)
+    #       property = :cf
+    #     else
+    #       property = :attachment
+    #     end
+    #     JournalDetail.create(:journal_id => j.id, :property => property,
+    #       :prop_key => prop_key, :old_value => values.first, :value => values.last)
+    #   end
     end
 
     change_table "journals", :force => true do |t|
@@ -109,9 +106,7 @@ class GeneralizeJournals < ActiveRecord::Migration
       t.remove :changes
     end
 
-    add_index "journal_details", ["journal_id"], :name => "journal_details_journal_id"
-    add_index "journals", ["created_on"], :name => "index_journals_on_created_on"
-    add_index "journals", ["journalized_id", "journalized_type"], :name => "journals_journalized_id"
-    add_index "journals", ["journalized_id"], :name => "index_journals_on_journalized_id"
+    # add_index "journal_details", ["journal_id"], :name => "journal_details_journal_id"
+    # add_index "journals", ["journalized_id", "journalized_type"], :name => "journals_journalized_id"
   end
 end
