@@ -35,13 +35,13 @@ module Redmine::Acts::Journalized
     def init_journal(user = User.current, notes = "")
       @notes ||= notes
       @journal_user ||= user
-      if self.respond_to? :custom_values
-        @custom_values_before_save = custom_values.inject({}) do |hash, cv|
-          hash[cv.custom_field_id] = cv.value
-          hash
-        end
-      end
-      @current_journal = last_journal
+      @associations_before_save ||= {}
+
+      @associations = {}
+      save_possible_association :custom_values, :key => :custom_field_id, :value => :value
+      save_possible_association :attachments, :key => :id, :value => :filename
+
+      @current_journal ||= last_journal
     end
 
     # Saves the notes and custom value changes in the last Journal
@@ -57,20 +57,39 @@ module Redmine::Acts::Journalized
         end
       end
 
-      if @custom_values_before_save
-        # Has custom values from init_journal_notes
-        changed_custom_values = current_custom_values - @custom_values_before_save
+      unless @associations.empty?
+        changed_associations = {}
+        changed_associations.merge(possibly_updated_association :custom_values)
+        changed_associations.merge(possibly_updated_association :attachments)
       end
 
-      if !changed_custom_values.try(:empty?) or !@notes.try(:empty?)
-        update_extended_journal_contents(changed_custom_values)
+      unless changed_associations.blank? and @notes.blank?
+        update_extended_journal_contents(changed_associations)
       end
       @current_journal = @journal_user = @notes = nil
     end
 
+    def save_possible_association(method, options)
+      @associations[method] = options
+      if self.respond_to? method
+        @associations_before_save[method] ||= send(method).inject({}) do |hash, cv|
+          hash[cv.send(options[:key])] = cv.send(options[:value])
+          hash
+        end
+      end
+    end
+
+    def possibly_updated_association(method)
+      if @associations_before_save[method]
+        # Has custom values from init_journal_notes
+        return changed_associations(method, @associations_before_save[method])
+      end
+      {}
+    end
+
     # Saves the notes and changed custom values to the journal
     # Creates a new journal, if no immediate attributes were changed
-    def update_extended_journal_contents(changed_custom_values)
+    def update_extended_journal_contents(changed_associations)
       if last_journal == @current_journal
         # No attribute changes, create a new journal entry
         # on which notes and changed custom values will be written
@@ -78,28 +97,25 @@ module Redmine::Acts::Journalized
         last_journal.update_attribute(:user_id, @journal_user.id)
       end
       last_journal.update_attribute(:notes, @notes) unless @notes.empty?
-      if changed_custom_values
-        combined_changes = last_journal.changes.merge(changed_custom_values)
+      if changed_associations
+        combined_changes = last_journal.changes.merge(changed_associations)
         last_journal.update_attribute(:changes, combined_changes.to_yaml)
       end
     end
 
-    # Allow to semantically substract a hash of custom value changes from another
-    # This the method '-' to the singleton class of the custom values hash, so the
-    # code for getting the difference between old and new custom values looks semantically correct
-    def current_custom_values
-      cvs = custom_values
-      class << cvs
-        def - cvs_before_save
-          self.inject({}) do |hash, c|
-            unless cvs_before_save[c.custom_field_id] == c.value
-              hash[c.custom_field_id] = [cvs_before_save[c.custom_field_id], c.value]
-            end
-            hash
-          end
+    def changed_associations(method, previous)
+      send(method).inject({}) do |hash, c|
+        key = c.send(@associations[method][:key])
+        new_value = c.send(@associations[method][:value])
+
+        if previous[key].blank? && new_value.blank?
+          # The key was empty before, don't add a blank value
+        elsif previous[key] != new_value
+          # The key's value changed
+          hash[key] = [previous[key], new_value]
         end
+        hash
       end
-      cvs
     end
 
     module ClassMethods
