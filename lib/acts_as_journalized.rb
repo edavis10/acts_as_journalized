@@ -90,8 +90,13 @@ module Redmine
           else
             Object.const_set(journal_class_name, Class.new(Journal)).tap do |c|
               # Run after the inherited hook to associate with the parent record.
-              c.class_eval("belongs_to :journaled, :class_name => '#{name}'")
-              c.class_eval("belongs_to :#{name.gsub("::", "_").underscore}, :foreign_key => 'journaled_id'")
+              # This eager loads the associated project (for permissions) if possible
+              if project_assoc = reflect_on_association(:project).try(:name)
+                include_option = ", :include => :#{project_assoc.to_s}"
+              end
+              c.class_eval("belongs_to :journaled, :class_name => '#{name}' #{include_option}")
+              c.class_eval("belongs_to :#{name.gsub("::", "_").underscore},
+                  :foreign_key => 'journaled_id' #{include_option}")
             end
           end
         end
