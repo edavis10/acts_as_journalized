@@ -47,6 +47,9 @@ module Redmine::Acts::Journalized
       end
     end
 
+    def event_url(options = {})
+      last_journal.event_url(options)
+    end
 
     deprecate :recipients => "use #last_journal.recipients"
     deprecate :current_journal => "use #last_journal"
