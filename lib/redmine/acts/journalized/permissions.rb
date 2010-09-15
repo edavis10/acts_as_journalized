@@ -22,6 +22,7 @@ module Redmine::Acts::Journalized
     # Default implementation of journal editing permission
     # Is overridden if defined in the journalized model directly
     def journal_editable_by?(user)
+      return true if user.admin?
       if respond_to? :editable_by?
         editable_by? user
       else
