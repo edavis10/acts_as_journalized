@@ -29,7 +29,9 @@ class Journal < ActiveRecord::Base
   include JournalDeprecated
 
   # Make sure each journaled model instance only has unique version ids
-  validates_uniqueness_of :version, :scope => [:journaled_id]
+  validates_uniqueness_of :version, :scope => [:journaled_id, :type]
+  belongs_to :journaled
+  belongs_to :user
 
   # ActiveRecord::Base#changes is an existing method, so before serializing the +changes+ column,
   # the existing +changes+ method is undefined. The overridden +changes+ method pertained to
