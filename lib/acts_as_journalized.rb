@@ -165,7 +165,7 @@ module Redmine
               options[:url] = Proc.new do |journal|
                 { :controller => plural_name,
                   :action => 'show',
-                  :id => journal.journaled.id,
+                  :id => journal.journaled_id,
                   :anchor => "note-#{journal.version}" }
               end
             end
