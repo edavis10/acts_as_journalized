@@ -82,6 +82,8 @@ module Redmine::Acts::Journalized
           journals << self.class.journal_class.create(journal_attributes)
           reset_journal_changes
           reset_journal
+        rescue # FIXME: What to do? This likely means that the parent record is invalid!
+          false
         end
 
         # Returns whether the last journal should be updated upon updating the parent record.
