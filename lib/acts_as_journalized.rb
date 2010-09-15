@@ -91,6 +91,7 @@ module Redmine
             Object.const_set(journal_class_name, Class.new(Journal)).tap do |c|
               # Run after the inherited hook to associate with the parent record.
               c.class_eval("belongs_to :journaled, :class_name => '#{name}'")
+              c.class_eval("belongs_to :#{name.gsub("::", "_").underscore}, :foreign_key => 'journaled_id'")
             end
           end
         end
