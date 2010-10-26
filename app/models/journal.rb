@@ -81,6 +81,14 @@ class Journal < ActiveRecord::Base
   def old_value_for(prop)
     details[prop.to_s].first if details.keys.include? prop.to_s
   end
+  
+  # Returns a string of css classes
+  def css_classes
+    s = 'journal'
+    s << ' has-notes' unless notes.blank?
+    s << ' has-details' unless details.empty?
+    s
+  end
 
   # This is here to allow people to disregard the difference between working with a
   # Journal and the object it is attached to
