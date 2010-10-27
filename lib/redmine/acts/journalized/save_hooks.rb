@@ -33,7 +33,9 @@ module Redmine::Acts::Journalized
     # Saves the current custom values, notes and journal to include them in the next journal
     # Called before save
     def init_journal(user = User.current, notes = "")
-      @notes ||= notes
+      if notes.respond_to? :to_str # There are some uses of init_journal with a non-string as second param
+        @notes ||= notes
+      end
       @journal_user ||= user
       @associations_before_save ||= {}
 
