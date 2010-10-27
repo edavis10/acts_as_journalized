@@ -74,7 +74,7 @@ module Redmine::Acts::Journalized
         # A new journal will be created if attributes have changed or no previous journal
         # exists
         def create_journal?
-          !journal_changes.blank? || !journal_notes.blank? || journals.empty?
+          !journal_changes.blank? or !journal_notes.blank? or journals.empty?
         end
 
         # Creates a new journal upon updating the parent record.

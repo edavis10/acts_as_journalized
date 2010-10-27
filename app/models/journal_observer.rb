@@ -17,7 +17,7 @@
 
 class JournalObserver < ActiveRecord::Observer
   def after_create(journal)
-    if journal.type == "IssueJournal"
+    if journal.type == "IssueJournal" and journal.version > 1
       if Setting.notified_events.include?('issue_updated') ||
           (Setting.notified_events.include?('issue_note_added') && journal.notes.present?) ||
           (Setting.notified_events.include?('issue_status_updated') && journal.new_status.present?) ||

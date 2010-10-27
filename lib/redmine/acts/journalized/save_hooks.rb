@@ -58,7 +58,7 @@ module Redmine::Acts::Journalized
       unless changed_associations.blank?
         update_extended_journal_contents(changed_associations)
       end
-      @current_journal = nil
+      @current_journal = @journal_notes = @journal_user = nil
     end
 
     def save_possible_association(method, options)
