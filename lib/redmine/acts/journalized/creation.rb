@@ -74,7 +74,7 @@ module Redmine::Acts::Journalized
         # A new journal will be created if attributes have changed or no previous journal
         # exists
         def create_journal?
-          !journal_changes.blank? || journals.empty?
+          !journal_changes.blank? || !journal_notes.blank? || journals.empty?
         end
 
         # Creates a new journal upon updating the parent record.
@@ -82,6 +82,7 @@ module Redmine::Acts::Journalized
           journals << self.class.journal_class.create(journal_attributes)
           reset_journal_changes
           reset_journal
+          true
         rescue # FIXME: What to do? This likely means that the parent record is invalid!
           false
         end
@@ -125,7 +126,9 @@ module Redmine::Acts::Journalized
         # Specifies the attributes used during journal creation. This is separated into its own
         # method so that it can be overridden by the VestalVersions::Users feature.
         def journal_attributes
-          {:journaled_id => self.id, :activity_type => activity_type, :changes => journal_changes, :version => last_version + 1}
+          attributes = { :journaled_id => self.id, :activity_type => activity_type, 
+            :changes => journal_changes, :version => last_version + 1,
+            :notes => journal_notes, :user_id => journal_user.id }
         end
     end
   end

@@ -27,16 +27,16 @@ module Redmine::Acts::Journalized
       base.class_eval do
         before_save :init_journal
         after_save :update_journal
+        
+        attr_accessor :journal_notes, :journal_user
       end
     end
 
     # Saves the current custom values, notes and journal to include them in the next journal
     # Called before save
     def init_journal(user = User.current, notes = "")
-      if notes.respond_to? :to_str # There are some uses of init_journal with a non-string as second param
-        @notes ||= notes
-      end
-      @journal_user ||= user
+      self.journal_notes ||= notes
+      self.journal_user ||= user
       @associations_before_save ||= {}
 
       @associations = {}
@@ -49,26 +49,16 @@ module Redmine::Acts::Journalized
     # Saves the notes and custom value changes in the last Journal
     # Called after_save
     def update_journal
-      unless last_journal == @current_journal
-        # A new journal was created: make sure the user is set properly
-        # FIXME: This is ugly
-        last_journal.update_attribute(:user_id, @journal_user.id)
-        unless last_journal.user_id == @journal_user.id
-          last_journal.reload
-          last_journal.update_attribute(:user_id, @journal_user.id)
-        end
-      end
-
       unless @associations.empty?
         changed_associations = {}
         changed_associations.merge(possibly_updated_association :custom_values)
         changed_associations.merge(possibly_updated_association :attachments)
       end
 
-      unless changed_associations.blank? and @notes.blank?
+      unless changed_associations.blank?
         update_extended_journal_contents(changed_associations)
       end
-      @current_journal = @journal_user = @notes = nil
+      @current_journal = nil
     end
 
     def save_possible_association(method, options)
@@ -96,9 +86,7 @@ module Redmine::Acts::Journalized
         # No attribute changes, create a new journal entry
         # on which notes and changed custom values will be written
         create_journal
-        last_journal.update_attribute(:user_id, @journal_user.id)
       end
-      last_journal.update_attribute(:notes, @notes) unless @notes.empty?
       if changed_associations
         combined_changes = last_journal.changes.merge(changed_associations)
         last_journal.update_attribute(:changes, combined_changes.to_yaml)
