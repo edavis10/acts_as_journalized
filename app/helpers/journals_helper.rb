@@ -35,7 +35,7 @@ module JournalsHelper
     label = journal.version == 1 ? :label_added_time_by : :label_updated_time_by
     journal_content = render_journal_details(journal, label)
     journal_content += render_notes(model, journal, options) unless journal.notes.blank?
-    content_tag "div", journal_content, { :id => "change-#{journal.id}", :class => journal.css_journal_classes }
+    content_tag "div", journal_content, { :id => "change-#{journal.id}", :class => journal.css_classes }
   end
 
   # This renders a journal entry wiht a header and details
