@@ -83,7 +83,10 @@ module Redmine::Acts::Journalized
           reset_journal_changes
           reset_journal
           true
-        rescue # FIXME: What to do? This likely means that the parent record is invalid!
+        rescue Exception => e # FIXME: What to do? This likely means that the parent record is invalid!
+          p e
+          p e.message
+          p e.backtrace
           false
         end
 

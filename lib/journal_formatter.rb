@@ -24,6 +24,7 @@ module JournalFormatter
   unloadable
   mattr_accessor :formatters, :registered_fields
   include ApplicationHelper
+  include CustomFieldsHelper
   include ActionView::Helpers::TagHelper
   include ActionView::Helpers::UrlHelper
   extend Redmine::I18n
