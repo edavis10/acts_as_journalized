@@ -40,6 +40,7 @@ module Redmine::Acts::Journalized
           def #{m}
             if last_journal.nil?
               create_journal
+              journals.reload
             end
             return last_journal.#{m}
           end
