@@ -23,7 +23,9 @@
 module JournalFormatter
   unloadable
   mattr_accessor :formatters, :registered_fields
+  include ApplicationHelper
   include ActionView::Helpers::TagHelper
+  include ActionView::Helpers::UrlHelper
   extend Redmine::I18n
 
   def self.register(hash)
@@ -85,8 +87,8 @@ module JournalFormatter
     [label, old_value, value]
   end
 
-  def format_html_attachment_detail(value)
-    if !value.blank? && a = Attachment.find_by_id(value)
+  def format_html_attachment_detail(key, value)
+    if !value.blank? && a = Attachment.find_by_id(key.to_i)
       # Link to the attachment if it has not been removed
       link_to_attachment(a)
     else
@@ -101,6 +103,42 @@ module JournalFormatter
     value = content_tag("i", h(value))
     [label, old_value, value]
   end
+  
+  def property(detail)
+    key = prop_key(detail)
+    if journaled.class.columns.collect(&:name).include? key
+      :attribute
+    elsif key.start_with? "custom_values"
+      :custom_field
+    elsif key.start_with? "attachments"
+      :attachment
+    end
+  end
+  
+  def prop_key(detail)
+    if detail.respond_to? :to_ary
+      detail.first
+    else
+      detail
+    end
+  end
+  
+  def values(detail)
+    key = prop_key(detail)
+    if detail != key
+      detail.last
+    else
+      details[key.to_s]
+    end
+  end
+  
+  def old_value(detail)
+    values(detail).last
+  end
+  
+  def value(detail)
+    values(detail).first
+  end
 
   def render_detail(detail, no_html=false)
     if detail.respond_to? :to_ary
@@ -111,12 +149,13 @@ module JournalFormatter
       values = details[key.to_s]
     end
 
-    if journaled.class.columns.collect(&:name).include? key
+    case property(detail)
+    when :attribute
       attr_detail = format_attribute_detail(key, values, no_html)
-    elsif key.start_with? "custom_values"
+    when :custom_field
       custom_field = CustomField.find_by_id(key.sub("custom_values", "").to_i)
       cv_detail = format_custom_value_detail(custom_field, values, no_html)
-    elsif key.start_with? "attachments"
+    when :attachment
       attachment_detail = format_attachment_detail(key.sub("attachments", ""), values, no_html)
     end
 
@@ -128,7 +167,7 @@ module JournalFormatter
 
     unless no_html
       label, old_value, value = *format_html_detail(label, old_value, value)
-      value = format_html_attachment_detail(value) if attachment_detail
+      value = format_html_attachment_detail(key.sub("attachments", ""), value) if attachment_detail
     end
 
     unless value.blank?

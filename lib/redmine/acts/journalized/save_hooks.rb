@@ -90,13 +90,12 @@ module Redmine::Acts::Journalized
         # on which notes and changed custom values will be written
         create_journal
       end
-      if changed_associations
-        combined_changes = last_journal.changes.merge(changed_associations)
-        last_journal.update_attribute(:changes, combined_changes.to_yaml)
-      end
+      combined_changes = last_journal.changes.merge(changed_associations)
+      last_journal.update_attribute(:changes, combined_changes.to_yaml)
     end
 
     def changed_associations(method, previous)
+      send(method).reload # Make sure the associations are reloaded
       send(method).inject({}) do |hash, c|
         key = c.send(@associations[method][:key])
         new_value = c.send(@associations[method][:value])
