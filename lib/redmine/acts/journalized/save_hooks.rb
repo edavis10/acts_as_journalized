@@ -51,12 +51,15 @@ module Redmine::Acts::Journalized
     def update_journal
       unless @associations.empty?
         changed_associations = {}
-        changed_associations.merge(possibly_updated_association :custom_values)
-        changed_associations.merge(possibly_updated_association :attachments)
+        changed_associations.merge!(possibly_updated_association :custom_values)
+        changed_associations.merge!(possibly_updated_association :attachments)
       end
 
       unless changed_associations.blank?
         update_extended_journal_contents(changed_associations)
+      end
+      if last_journal.user != @journal_user
+        last_journal.update_attribute(:user_id, @journal_user.id)
       end
       @current_journal = @journal_notes = @journal_user = nil
     end
