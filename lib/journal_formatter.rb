@@ -90,7 +90,8 @@ module JournalFormatter
   def format_html_attachment_detail(key, value)
     if !value.blank? && a = Attachment.find_by_id(key.to_i)
       # Link to the attachment if it has not been removed
-      link_to_attachment(a)
+      # FIXME: this is broken => link_to_attachment(a)
+      a.filename
     else
       content_tag("i", h(value)) if value
     end
