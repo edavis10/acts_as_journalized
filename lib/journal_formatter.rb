@@ -113,10 +113,11 @@ module JournalFormatter
 
     if journaled.class.columns.collect(&:name).include? key
       attr_detail = format_attribute_detail(key, values, no_html)
-    elsif key =~ /^\d+$/ && custom_field = CustomField.find_by_id(key.to_i)
+    elsif key.start_with? "custom_values"
+      custom_field = CustomField.find_by_id(key.sub("custom_values", "").to_i)
       cv_detail = format_custom_value_detail(custom_field, values, no_html)
-    else
-      attachment_detail = format_attachment_detail(key, values, no_html)
+    elsif key.start_with? "attachments"
+      attachment_detail = format_attachment_detail(key.sub("attachments", ""), values, no_html)
     end
 
     label, old_value, value = attr_detail || cv_detail || attachment_detail

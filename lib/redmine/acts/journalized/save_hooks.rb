@@ -105,7 +105,7 @@ module Redmine::Acts::Journalized
           # The key was empty before, don't add a blank value
         elsif previous[key] != new_value
           # The key's value changed
-          hash[key] = [previous[key], new_value]
+          hash["#{method}#{key}"] = [previous[key], new_value]
         end
         hash
       end
