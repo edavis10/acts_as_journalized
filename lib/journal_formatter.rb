@@ -105,18 +105,18 @@ module JournalFormatter
     value = content_tag("i", h(value))
     [label, old_value, value]
   end
-  
+
   def property(detail)
     key = prop_key(detail)
-    if journaled.class.columns.collect(&:name).include? key
-      :attribute
-    elsif key.start_with? "custom_values"
+    if key.start_with? "custom_values"
       :custom_field
     elsif key.start_with? "attachments"
       :attachment
+    elsif journaled.class.columns.collect(&:name).include? key
+      :attribute
     end
   end
-  
+
   def prop_key(detail)
     if detail.respond_to? :to_ary
       detail.first
@@ -133,13 +133,13 @@ module JournalFormatter
       details[key.to_s]
     end
   end
-  
+
   def old_value(detail)
-    values(detail).last
-  end
-  
-  def value(detail)
     values(detail).first
+  end
+
+  def value(detail)
+    values(detail).last
   end
 
   def render_detail(detail, no_html=false)

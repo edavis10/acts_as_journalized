@@ -91,8 +91,13 @@ class Journal < ActiveRecord::Base
   end
 
   # This is here to allow people to disregard the difference between working with a
-  # Journal and the object it is attached to
+  # Journal and the object it is attached to.
+  # The lookup is as follows:
+  ## => Call super if the method corresponds to one of our attributes (will end up in AR::Base)
+  ## => Try the journaled object with the same method and arguments
+  ## => On error, call super
   def method_missing(method, *args, &block)
+    return super if attributes[method.to_s]
     journaled.send(method, *args, &block)
   rescue NoMethodError => e
     e.name == method ? super : raise(e)
