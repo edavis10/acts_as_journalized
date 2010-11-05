@@ -70,10 +70,13 @@ module Redmine::Acts::Journalized
     module InstanceMethods
       private
         # Returns whether a new journal should be created upon updating the parent record.
-        # A new journal will be created if attributes have changed or no previous journal
-        # exists
+        # A new journal will be created if
+        # a) attributes have changed
+        # b) no previous journal exists
+        # c) journal notes were added
+        # d) the parent record is already saved
         def create_journal?
-          !journal_changes.blank? or !journal_notes.blank? or journals.empty?
+          (journal_changes.present? or journal_notes.present? or journals.empty?) and !new_record?
         end
 
         # Creates a new journal upon updating the parent record.

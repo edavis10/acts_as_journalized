@@ -47,7 +47,7 @@ module Redmine::Acts::Journalized
     end
 
     # Saves the notes and custom value changes in the last Journal
-    # Called after_save
+    # Called before create_journal
     def update_journal
       unless @associations.empty?
         changed_associations = {}
