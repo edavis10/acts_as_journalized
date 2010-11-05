@@ -76,12 +76,14 @@ module Redmine::Acts::Journalized
         # c) journal notes were added
         # d) the parent record is already saved
         def create_journal?
+          update_journal
           (journal_changes.present? or journal_notes.present? or journals.empty?) and !new_record?
         end
 
         # Creates a new journal upon updating the parent record.
+        # "update_journal" has been called in "update_journal?" at this point (to get a hold on association changes)
+        # It must not be called again here.
         def create_journal
-          update_journal
           journals << self.class.journal_class.create(journal_attributes)
           reset_journal_changes
           reset_journal
