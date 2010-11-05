@@ -50,7 +50,7 @@ class Journal < ActiveRecord::Base
   # the version during reversion, as initial versions have no serialized changes attached. Helps
   # maintain backwards compatibility.
   def initial?
-    version == 1
+    version < 2
   end
 
   # The anchor number for html output
