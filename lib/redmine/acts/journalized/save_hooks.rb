@@ -26,7 +26,7 @@ module Redmine::Acts::Journalized
 
       base.class_eval do
         before_save :init_journal
-        after_save :update_journal
+        after_save :reset_instance_variables
         
         attr_accessor :journal_notes, :journal_user
       end
@@ -58,9 +58,9 @@ module Redmine::Acts::Journalized
       unless changed_associations.blank?
         update_extended_journal_contents(changed_associations)
       end
-      if last_journal.user != @journal_user
-        last_journal.update_attribute(:user_id, @journal_user.id)
-      end
+    end
+
+    def reset_instance_variables
       @associations_before_save = @current_journal = @journal_notes = @journal_user = nil
     end
 
@@ -85,13 +85,7 @@ module Redmine::Acts::Journalized
     # Saves the notes and changed custom values to the journal
     # Creates a new journal, if no immediate attributes were changed
     def update_extended_journal_contents(changed_associations)
-      if last_journal == @current_journal
-        # No attribute changes, create a new journal entry
-        # on which notes and changed custom values will be written
-        create_journal
-      end
-      combined_changes = last_journal.changes.merge(changed_associations)
-      last_journal.update_attribute(:changes, combined_changes.to_yaml)
+      journal_changes.merge!(changed_associations)
     end
 
     def changed_associations(method, previous)

@@ -45,7 +45,6 @@ module Redmine::Acts::Journalized
         include InstanceMethods
 
         after_save :create_journal, :if => :create_journal?
-        after_update :update_journal, :if => :update_journal?
 
         class << self
           alias_method_chain :prepare_journaled_options, :creation
@@ -79,6 +78,7 @@ module Redmine::Acts::Journalized
 
         # Creates a new journal upon updating the parent record.
         def create_journal
+          update_journal
           journals << self.class.journal_class.create(journal_attributes)
           reset_journal_changes
           reset_journal
@@ -88,22 +88,6 @@ module Redmine::Acts::Journalized
           p e.message
           p e.backtrace
           false
-        end
-
-        # Returns whether the last journal should be updated upon updating the parent record.
-        # This method is overridden in VestalVersions::Control to account for a control block that
-        # merges changes onto the previous journal.
-        def update_journal?
-          false
-        end
-
-        # Updates the last journal's changes by appending the current journal changes.
-        def update_journal
-          return create_journal unless v = journals.last
-          v.changes_will_change!
-          v.update_attribute(:changes, v.changes.append_changes(journal_changes))
-          reset_journal_changes
-          reset_journal
         end
 
         # Returns an array of column names that should be included in the changes of created

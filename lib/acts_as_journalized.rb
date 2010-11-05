@@ -64,8 +64,6 @@ module Redmine
           include Users
           include Reversion
           include Reset
-          include Conditions
-          include Control
           include Reload
           include Permissions
           include SaveHooks
