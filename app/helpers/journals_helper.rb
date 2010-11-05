@@ -32,8 +32,8 @@ module JournalsHelper
   end
 
   def render_journal(model, journal, options = {})
-    label = journal.version == 1 ? :label_added_time_by : :label_updated_time_by
-    journal_content = render_journal_details(journal, label)
+    return "" if journal.initial?
+    journal_content = render_journal_details(journal, :label_updated_time_by)
     journal_content += render_notes(model, journal, options) unless journal.notes.blank?
     content_tag "div", journal_content, { :id => "change-#{journal.id}", :class => journal.css_classes }
   end
@@ -42,9 +42,9 @@ module JournalsHelper
   def render_journal_details(journal, header_label = :label_updated_time_by)
     header = <<-HTML
       <h4>
-        <div style="float:right;">#{link_to "##{journal.version}", :anchor => "note-#{journal.version}"}</div>
+        <div style="float:right;">#{link_to "##{journal.anchor}", :anchor => "note-#{journal.anchor}"}</div>
         #{avatar(journal.user, :size => "24")}
-        #{content_tag('a', '', :name => "note-#{journal.version}")}
+        #{content_tag('a', '', :name => "note-#{journal.anchor}")}
         #{authoring journal.created_at, journal.user, :label => header_label}
       </h4>
     HTML

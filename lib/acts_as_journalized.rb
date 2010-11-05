@@ -75,7 +75,7 @@ module Redmine
           journal_class.acts_as_event journalized_event_hash(event_hash)
 
           (journal_hash[:except] ||= []) << self.primary_key << inheritance_column <<
-            :updated_on << :updated_at << :lock_version
+            :updated_on << :updated_at << :lock_version << :lft << :rgt
           prepare_journaled_options(journal_hash)
           has_many :journals, journal_hash.merge({:class_name => journal_class.name,
             :foreign_key => "journaled_id"}), &block
@@ -169,7 +169,7 @@ module Redmine
                 { :controller => plural_name,
                   :action => 'show',
                   :id => journal.journaled_id,
-                  :anchor => "note-#{journal.version}" }
+                  :anchor => ("note-#{journal.anchor}" unless journal.initial?) }
               end
             end
             { :description => :notes, :author => :user }.reverse_merge options
