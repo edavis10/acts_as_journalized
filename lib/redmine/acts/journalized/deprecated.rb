@@ -39,7 +39,17 @@ module Redmine::Acts::Journalized
         class_eval(<<-RUBY, __FILE__, __LINE__)
           def #{m}
             if last_journal.nil?
-              create_journal
+              begin
+                journals << self.class.journal_class.create(journal_attributes)
+                reset_journal_changes
+                reset_journal
+                true
+              rescue Exception => e # FIXME: What to do? This likely means that the parent record is invalid!
+                p e
+                p e.message
+                p e.backtrace
+                false
+              end
               journals.reload
             end
             return last_journal.#{m}

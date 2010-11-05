@@ -28,15 +28,15 @@ module Redmine::Acts::Journalized
         before_save :init_journal
         after_save :reset_instance_variables
         
-        attr_accessor :journal_notes, :journal_user
+        attr_reader :journal_notes, :journal_user
       end
     end
 
     # Saves the current custom values, notes and journal to include them in the next journal
     # Called before save
     def init_journal(user = User.current, notes = "")
-      self.journal_notes ||= notes
-      self.journal_user ||= user
+      @journal_notes ||= notes
+      @journal_user ||= user
       @associations_before_save ||= {}
 
       @associations = {}
@@ -61,6 +61,11 @@ module Redmine::Acts::Journalized
     end
 
     def reset_instance_variables
+      if last_journal != @current_journal
+        if last_journal.user != @journal_user
+          last_journal.update_attribute(:user_id, @journal_user.id)
+        end
+      end
       @associations_before_save = @current_journal = @journal_notes = @journal_user = nil
     end
 
