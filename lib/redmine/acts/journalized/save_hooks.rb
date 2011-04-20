@@ -49,7 +49,7 @@ module Redmine::Acts::Journalized
     # Saves the notes and custom value changes in the last Journal
     # Called before create_journal
     def update_journal
-      unless @associations.empty?
+      unless (@associations || {}).empty?
         changed_associations = {}
         changed_associations.merge!(possibly_updated_association :custom_values)
         changed_associations.merge!(possibly_updated_association :attachments)

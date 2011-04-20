@@ -55,7 +55,7 @@ class GeneralizeJournals < ActiveRecord::Migration
             end
           end
           p "Updateing #{o}"
-          o.last_journal.update_attribute(:created_at, created_at) if created_at
+          o.last_journal.update_attribute(:created_at, created_at) if created_at and o.last_journal
         end
       end
     end
