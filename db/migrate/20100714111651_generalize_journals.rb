@@ -43,6 +43,7 @@ class GeneralizeJournals < ActiveRecord::Migration
     # Create creation journals for all activity providers
     providers = Redmine::Activity.providers.collect {|k, v| v.collect(&:constantize) }.flatten.compact.uniq
     providers.each do |p|
+      next unless p.table_exists? # Objects not in the DB yet need creation journal entries
       p.find(:all).each do |o|
         unless o.last_journal
           o.send(:update_journal)
