@@ -22,7 +22,7 @@ class MergeWikiVersionsWithJournals < ActiveRecord::Migration
   end
 
   def self.down
-    change_table :wiki_contents do
+    change_table :wiki_contents do |t|
       t.rename :lock_version, :version
     end
 
