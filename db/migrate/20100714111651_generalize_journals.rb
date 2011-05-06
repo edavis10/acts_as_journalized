@@ -36,7 +36,7 @@ class GeneralizeJournals < ActiveRecord::Migration
     JournalDetails.all.each do |detail|
       journal = Journal.find(detail.journal_id)
       changes = journal.changes || {}
-      changes[detail.prop_key.to_sym] = [detail.old_value, detail.value]
+      changes[detail.prop_key.to_s] = [detail.old_value, detail.value]
       journal.update_attribute(:changes, changes.to_yaml)
     end
 
