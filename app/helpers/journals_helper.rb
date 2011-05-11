@@ -67,8 +67,8 @@ module JournalsHelper
     action = 'edit'
     reply_links = authorize_for(controller, action)
 
-    if User.current.logged? && options[:edit_permission]
-      editable = User.current.allowed_to?(options[:edit_permission], journal.project) || nil
+    if User.current.logged?
+      editable = User.current.allowed_to?(options[:edit_permission], journal.project) if options[:edit_permission]
       if journal.user == User.current && options[:edit_own_permission]
         editable ||= User.current.allowed_to?(options[:edit_own_permission], journal.project)
       end
