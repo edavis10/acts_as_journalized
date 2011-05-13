@@ -21,7 +21,7 @@ class GeneralizeJournals < ActiveRecord::Migration
     end
 
     Journal.all.group_by(&:journaled_id).each_pair do |id, journals|
-      journals.sort_by(:created_at).each_with_index do |j, idx|
+      journals.sort_by(&:created_at).each_with_index do |j, idx|
         j.update_attribute(:type, "#{j.journalized_type}Journal")
         j.update_attribute(:version, idx + 1)
         # FIXME: Find some way to choose the right activity here
@@ -36,7 +36,13 @@ class GeneralizeJournals < ActiveRecord::Migration
     JournalDetails.all.each do |detail|
       journal = Journal.find(detail.journal_id)
       changes = journal.changes || {}
-      changes[detail.prop_key.to_sym] = [detail.old_value, detail.value]
+      if detail.property == 'attr' # Standard attributes
+        changes[detail.prop_key.to_s] = [detail.old_value, detail.value]
+      elsif detail.property == 'cf' # Custom fields
+        changes["custom_values_" + detail.prop_key.to_s] = [detail.old_value, detail.value]
+      elsif detail.property == 'attachment' # Attachment
+        changes["attachments_" + detail.prop_key.to_s] = [detail.old_value, detail.value]
+      end
       journal.update_attribute(:changes, changes.to_yaml)
     end
 
@@ -54,7 +60,7 @@ class GeneralizeJournals < ActiveRecord::Migration
               break
             end
           end
-          p "Updateing #{o}"
+          p "Updating #{o}"
           o.last_journal.update_attribute(:created_at, created_at) if created_at and o.last_journal
         end
       end
@@ -72,7 +78,7 @@ class GeneralizeJournals < ActiveRecord::Migration
     #   t.string  "value"
     # end
 
-    change_table "journals", :force => true do |t|
+    change_table "journals" do |t|
       t.rename :journaled_id, :journalized_id
       t.rename :created_at, :created_on
 
@@ -95,7 +101,7 @@ class GeneralizeJournals < ActiveRecord::Migration
     #   end
     end
 
-    change_table "journals", :force => true do |t|
+    change_table "journals" do |t|
       t.remove_index :journaled_id
       t.remove_index :activity_type
       t.remove_index :created_at
